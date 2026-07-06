@@ -1,8 +1,10 @@
 package member;
 
+import java.util.List;
+
 public interface MemberRepository {
 
-    void save(Member member);
-    void findById(Long id);
-    void findAll();
+    Member save(Member member);
+    Member findById(Long id);
+    List<Member> findAll();
 }

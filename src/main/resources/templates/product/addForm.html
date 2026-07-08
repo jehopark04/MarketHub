@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>상품 등록</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        h1 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input, select, textarea { width: 100%; max-width: 400px; padding: 8px; box-sizing: border-box; }
+        .field-error { border-color: #c0392b; }
+        .error-message { color: #c0392b; font-size: 0.9em; margin-top: 4px; }
+        .btn { display: inline-block; padding: 8px 14px; border: 1px solid #333; border-radius: 4px; background: #fff; cursor: pointer; }
+    </style>
+</head>
+<body>
+<h1>상품 등록</h1>
+
+<form th:action="@{/products/new}" th:object="${productCreateForm}" method="post">
+
+    <div class="form-group">
+        <label for="title">제목</label>
+        <input type="text" id="title" th:field="*{title}" th:errorclass="field-error">
+        <div class="error-message" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">제목 오류</div>
+    </div>
+
+    <div class="form-group">
+        <label for="description">설명</label>
+        <textarea id="description" rows="5" th:field="*{description}" th:errorclass="field-error"></textarea>
+        <div class="error-message" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">설명 오류</div>
+    </div>
+
+    <div class="form-group">
+        <label for="price">가격</label>
+        <input type="number" id="price" th:field="*{price}" th:errorclass="field-error">
+        <div class="error-message" th:if="${#fields.hasErrors('price')}" th:errors="*{price}">가격 오류</div>
+    </div>
+
+    <div class="form-group">
+        <label for="category">카테고리</label>
+        <select id="category" th:field="*{category}" th:errorclass="field-error">
+            <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat.description}"></option>
+        </select>
+        <div class="error-message" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">카테고리 오류</div>
+    </div>
+
+    <button class="btn" type="submit">등록</button>
+</form>
+</body>
+</html>

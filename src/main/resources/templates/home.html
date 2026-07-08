@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>MarketHub</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        .hero { max-width: 480px; margin: 80px auto; text-align: center; }
+        h1 { font-size: 2em; margin-bottom: 10px; }
+        p.desc { color: #888; margin-bottom: 40px; }
+        .menu { display: flex; flex-direction: column; gap: 12px; }
+        .btn { display: block; padding: 12px 0; border: 1px solid #333; border-radius: 4px; text-decoration: none; color: #333; font-weight: bold; }
+        .btn-primary { background: #333; color: #fff; }
+    </style>
+</head>
+<body>
+<div class="hero">
+    <h1>MarketHub</h1>
+    <p class="desc">중고거래 웹 서비스</p>
+
+    <div class="menu">
+        <a class="btn btn-primary" th:href="@{/products}">상품 둘러보기</a>
+        <a class="btn" th:href="@{/login}">로그인</a>
+        <a class="btn" th:href="@{/members/new}">회원가입</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package product;
+package used.system.product;
 
 import java.util.List;
 

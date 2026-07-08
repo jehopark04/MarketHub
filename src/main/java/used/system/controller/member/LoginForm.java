@@ -1,16 +1,19 @@
-package controller.member;
+package used.system.controller.member;
 
-public class MemberForm {
-
+public class LoginForm {
     private String loginId;
-    private String name;
     private String password;
 
-    public MemberForm(String loginId, String name, String password) {
+
+    public LoginForm(){
+
+    }
+
+    public LoginForm(String loginId, String password) {
         this.loginId = loginId;
-        this.name = name;
         this.password = password;
     }
+
 
     public String getLoginId() {
         return loginId;
@@ -18,14 +21,6 @@ public class MemberForm {
 
     public void setLoginId(String loginId) {
         this.loginId = loginId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getPassword() {

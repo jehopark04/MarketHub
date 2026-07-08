@@ -1,12 +1,9 @@
-package member;
+package used.system.member;
 
 
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 public class MemoryMemberRepository implements MemberRepository{
@@ -30,5 +27,11 @@ public class MemoryMemberRepository implements MemberRepository{
     @Override
     public List<Member> findAll() {
         return new ArrayList<>(memberMap.values());
+    }
+
+    @Override
+    public Optional<Member> findByLoginId(String loginId) {
+        return memberMap.values().stream()
+                .filter(member -> member.getLoginId().equals(loginId)).findFirst();
     }
 }

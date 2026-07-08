@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>상품 상세</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        h1 { margin-bottom: 10px; }
+        .meta { color: #888; margin-bottom: 20px; }
+        dl { display: grid; grid-template-columns: 120px 1fr; row-gap: 10px; }
+        dt { font-weight: bold; color: #555; }
+        dd { margin: 0; }
+        .actions { margin-top: 30px; display: flex; gap: 10px; }
+        .btn { display: inline-block; padding: 8px 14px; border: 1px solid #333; border-radius: 4px; background: #fff; cursor: pointer; }
+        .btn-danger { border-color: #c0392b; color: #c0392b; }
+        .status-form { margin-top: 20px; display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+<a th:href="@{/products}">&larr; 목록으로</a>
+
+<h1 th:text="${product.title}">상품 제목</h1>
+<p class="meta" th:text="${product.createAt}">등록일</p>
+
+<dl>
+    <dt>카테고리</dt>
+    <dd th:text="${product.category.description}">카테고리</dd>
+
+    <dt>가격</dt>
+    <dd th:text="${product.price} + '원'">가격</dd>
+
+    <dt>상태</dt>
+    <dd th:text="${product.status}">상태</dd>
+
+    <dt>설명</dt>
+    <dd th:text="${product.description}">상품 설명</dd>
+
+    <dt>판매자</dt>
+    <dd th:text="${product.sellerId}">판매자</dd>
+</dl>
+
+<div class="actions" th:if="${isOwner}">
+    <a class="btn" th:href="@{/products/{id}/edit(id=${product.id})}">수정</a>
+    <form th:action="@{/products/{id}/delete(id=${product.id})}" method="post">
+        <button class="btn btn-danger" type="submit">삭제</button>
+    </form>
+</div>
+
+<form class="status-form" th:if="${isOwner}" th:action="@{/products/{id}/status(id=${product.id})}" method="post">
+    <label for="status">상태 변경</label>
+    <select id="status" name="status">
+        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == product.status}"></option>
+    </select>
+    <button class="btn" type="submit">변경</button>
+</form>
+</body>
+</html>

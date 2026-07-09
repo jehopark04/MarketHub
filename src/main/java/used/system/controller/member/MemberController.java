@@ -1,9 +1,14 @@
 package used.system.controller.member;
 
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import used.system.member.Member;
 import used.system.member.MemberService;
 import org.springframework.stereotype.Controller;
@@ -35,10 +40,30 @@ public class MemberController {
     }
 
     @PostMapping("/login")
-    public String login(LoginForm loginForm){
+    public String login(@Validated @ModelAttribute LoginForm loginForm, BindingResult bindingResult, HttpServletRequest request){
+        if (bindingResult.hasErrors()){ // 1차: 검증
+            return "login/loginForm";
+        }
         Member member = memberService.login(loginForm.getLoginId(), loginForm.getPassword());
+
+        if (member ==null){  // 2차: 인증실패
+            bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+            return "login/loginForm";
+        }
+
+        HttpSession session = request.getSession(); // 세션 작업
+        session.setAttribute(SessionConst.LOGIN_MEMBER, member);
         return "redirect:/";
 
+    }
+
+    @PostMapping("/logout")
+    public String logout(HttpServletRequest request){
+        HttpSession session = request.getSession(false); // -> false는 있으면 있는거고 없으면 null
+        if (session!=null){
+            session.invalidate();
+        }
+        return "redirect:/";
     }
 
 }

@@ -8,6 +8,7 @@
         .hero { max-width: 480px; margin: 80px auto; text-align: center; }
         h1 { font-size: 2em; margin-bottom: 10px; }
         p.desc { color: #888; margin-bottom: 40px; }
+        p.greeting { font-size: 1.1em; font-weight: bold; margin-bottom: 20px; }
         .menu { display: flex; flex-direction: column; gap: 12px; }
         .btn { display: block; padding: 12px 0; border: 1px solid #333; border-radius: 4px; text-decoration: none; color: #333; font-weight: bold; }
         .btn-primary { background: #333; color: #fff; }
@@ -18,10 +19,15 @@
     <h1>MarketHub</h1>
     <p class="desc">중고거래 웹 서비스</p>
 
+    <p class="greeting" th:if="${member != null}">
+        <span th:text="${member.name}">이름</span>님 안녕하세요 ㅎㅎ
+    </p>
+
     <div class="menu">
         <a class="btn btn-primary" th:href="@{/products}">상품 둘러보기</a>
         <a class="btn" th:href="@{/login}">로그인</a>
         <a class="btn" th:href="@{/members/new}">회원가입</a>
+        <a class="btn" th:href="@{/my-page}">마이페이지</a>
     </div>
 </div>
 </body>

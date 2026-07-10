@@ -9,14 +9,24 @@ public class Product {
     private String title;
     private String description;
     private int price;
+    private ProductGrade grade;
     private LocalDateTime createAt;
 
-    public Product(String sellerId, String title, String description, int price) {
+    public Product(String sellerId, String title, String description, int price, ProductGrade grade) {
         this.sellerId = sellerId;
         this.title = title;
         this.description = description;
         this.price = price;
         this.createAt = LocalDateTime.now();
+        this.grade = grade;
+    }
+
+    public ProductGrade getGrade() {
+        return grade;
+    }
+
+    public void setGrade(ProductGrade grade) {
+        this.grade = grade;
     }
 
     public Long getId() {

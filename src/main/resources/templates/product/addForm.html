@@ -17,7 +17,7 @@
 <body>
 <h1>상품 등록</h1>
 
-<form th:action="@{/products/new}" th:object="${productCreateForm}" method="post">
+<form th:action="@{/products}" th:object="${productCreateForm}" method="post">
 
     <div class="form-group">
         <label for="title">제목</label>
@@ -38,11 +38,11 @@
     </div>
 
     <div class="form-group">
-        <label for="category">카테고리</label>
-        <select id="category" th:field="*{category}" th:errorclass="field-error">
-            <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat.description}"></option>
+        <label for="grade">상품 등급</label>
+        <select id="grade" th:field="*{grade}" th:errorclass="field-error">
+            <option th:each="g : ${grades}" th:value="${g}" th:text="${g}"></option>
         </select>
-        <div class="error-message" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">카테고리 오류</div>
+        <div class="error-message" th:if="${#fields.hasErrors('grade')}" th:errors="*{grade}">등급 오류</div>
     </div>
 
     <button class="btn" type="submit">등록</button>

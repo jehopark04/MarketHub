@@ -2,6 +2,7 @@ package used.system.product;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import used.system.exception.ProductNotFoundException;
 
 import java.util.List;
 
@@ -18,7 +19,11 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public Product findById(Long id) {
-        return productRepository.findById(id);
+        Product product = productRepository.findById(id);
+        if (product == null){
+            throw new ProductNotFoundException("상품을 찾을 수 없습니다. id = " + id);
+        }
+        return product;
     }
 
     @Override

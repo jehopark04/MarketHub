@@ -1,5 +1,7 @@
 package used.system.controller.product;
 
+import used.system.product.ProductGrade;
+
 public class ProductForm {
 
 
@@ -7,13 +9,26 @@ public class ProductForm {
     private String title;
     private String description;
     private int price;
+    private ProductGrade grade;
 
 
-    public ProductForm(String sellerId, String title, String description, int price) {
+    public ProductForm(){
+
+    }
+    public ProductForm(String sellerId, String title, String description, int price, ProductGrade grade) {
         this.sellerId = sellerId;
         this.title = title;
         this.description = description;
         this.price = price;
+        this.grade = grade;
+    }
+
+    public ProductGrade getGrade() {
+        return grade;
+    }
+
+    public void setGrade(ProductGrade grade) {
+        this.grade = grade;
     }
 
     public String getSellerId() {

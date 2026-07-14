@@ -14,6 +14,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ProductNotFoundException.class)
     public String handlerProductNotFound(ProductNotFoundException e, Model model){
         model.addAttribute("message", e.getMessage());
-        return "error/404";
+        return "error/productNotFound";
+    }
+
+
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(MemberNotFoundException.class)
+    public String handlerMemberNotFound(MemberNotFoundException e, Model model){
+        model.addAttribute("message", e.getMessage());
+        return "error/memberNotFound";
     }
 }

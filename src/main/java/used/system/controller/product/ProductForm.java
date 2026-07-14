@@ -1,65 +1,41 @@
 package used.system.controller.product;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import used.system.product.ProductGrade;
 
+
+@Setter
+@Getter
 public class ProductForm {
 
-
-    private String sellerId;
+    @NotBlank(message = "제목을 입력하세요.")
+    @Size(max = 30, message = "30자 이내로 입력하셔야 합니다. ")
     private String title;
+
+
+    @Size(max = 250, message = "250자 이내로 입력해주세요.")
     private String description;
-    private int price;
+
+    @NotNull(message = "가격을 입력해주셔야 합니다.")
+    private Integer price; // int는 null이 될수 없다. -> TypeMismatchException이 발생함 그러니 Integer가 들어가야함
+
+    @NotNull
     private ProductGrade grade;
 
 
     public ProductForm(){
 
     }
-    public ProductForm(String sellerId, String title, String description, int price, ProductGrade grade) {
-        this.sellerId = sellerId;
+    public ProductForm(String title, String description, int price, ProductGrade grade) {
         this.title = title;
         this.description = description;
         this.price = price;
         this.grade = grade;
     }
 
-    public ProductGrade getGrade() {
-        return grade;
-    }
 
-    public void setGrade(ProductGrade grade) {
-        this.grade = grade;
-    }
-
-    public String getSellerId() {
-        return sellerId;
-    }
-
-    public void setSellerId(String sellerId) {
-        this.sellerId = sellerId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
 }

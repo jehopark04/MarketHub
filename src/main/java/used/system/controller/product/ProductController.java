@@ -4,6 +4,7 @@ package used.system.controller.product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import used.system.controller.member.SessionConst;
@@ -44,13 +45,16 @@ public class ProductController {
      *
      */
     @PostMapping("products")
-    public String addProduct(@Validated @ModelAttribute ProductForm productForm,
+    public String addProduct(@Validated @ModelAttribute("productCreateForm") ProductForm productForm, BindingResult bindingResult,
                              @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false)Member loginMember){
 
         if (loginMember == null){
             return "redirect:/login";
         }
 
+        if (bindingResult.hasErrors()){
+            return "product/addForm";
+        }
         Product product = new Product(loginMember.getLoginId(), productForm.getTitle(), productForm.getDescription(), productForm.getPrice(), productForm.getGrade());
         productService.join(product);
         return "redirect:/products";

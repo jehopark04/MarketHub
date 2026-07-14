@@ -3,12 +3,12 @@ package used.system.controller.member;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import used.system.exception.DuplicateLoginIdException;
 import used.system.member.Member;
 import used.system.member.MemberService;
 import org.springframework.stereotype.Controller;
@@ -27,9 +27,22 @@ public class MemberController {
     }
 
     @PostMapping("/members")
-    public String create(MemberForm memberForm){
-        Member member = new Member(memberForm.getLoginId(), memberForm.getName(), memberForm.getPassword());
-        memberService.join(member);
+    public String create(@Validated @ModelAttribute("memberJoinForm") MemberForm memberForm, BindingResult bindingResult){
+        if (!memberForm.getPassword().equals(memberForm.getPasswordConfirm())){ // 비밀번호 확인 검증
+            bindingResult.rejectValue("passwordConfirm", "passwordMismatch", "비밀번호가 일치하지 않습니다.");
+        }
+
+        if (bindingResult.hasErrors()){
+            return "member/addform";
+        }
+        try {
+            Member member = new Member(memberForm.getLoginId(), memberForm.getName(), memberForm.getPassword());
+            memberService.join(member);
+        }catch (DuplicateLoginIdException e){
+            bindingResult.rejectValue("loginId", "duplicate", e.getMessage());
+            return "member/addform";
+        }
+
         return "redirect:/";
     }
 
@@ -65,5 +78,8 @@ public class MemberController {
         }
         return "redirect:/";
     }
+
+
+
 
 }

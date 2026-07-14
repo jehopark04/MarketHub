@@ -31,7 +31,10 @@ public class ProductController {
 
 
     @GetMapping("products/new")
-    public String addProductForm(Model model){
+    public String addProductForm(Model model, @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member){
+        if (member == null){
+            return "redirect:/login";
+        }
         model.addAttribute("productCreateForm", new ProductForm());
         return "product/addForm";
     }

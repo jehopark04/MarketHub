@@ -2,10 +2,8 @@ package used.system.product;
 
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class MemoryProductRepository implements ProductRepository{
@@ -29,5 +27,11 @@ public class MemoryProductRepository implements ProductRepository{
     @Override
     public List<Product> findAll() {
         return new ArrayList<>(productMap.values());
+    }
+
+    @Override
+    public List<Product> findBySellerId(String sellerId){
+        return productMap.values().stream()
+                .filter(product -> product.getSellerId().equals(sellerId)).collect(Collectors.toList());
     }
 }

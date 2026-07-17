@@ -30,4 +30,10 @@ public class ProductServiceImpl implements ProductService{
     public List<Product> findAll() {
         return productRepository.findAll();
     }
+
+    @Override
+    public List<Product> findBySellerId(String sellerId){
+        return productRepository.findBySellerId(sellerId);
+    }
+
 }

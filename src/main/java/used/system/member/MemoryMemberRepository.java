@@ -20,8 +20,7 @@ public class MemoryMemberRepository implements MemberRepository{
 
     @Override
     public Member findById(Long id) {
-        Member member = memberMap.get(id);
-        return member;
+        return memberMap.get(id);
     }
 
     @Override

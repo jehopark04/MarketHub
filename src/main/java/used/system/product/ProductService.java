@@ -6,4 +6,6 @@ public interface ProductService {
     Product join(Product product);
     Product findById(Long id);
     List<Product> findAll();
+
+    List<Product> findBySellerId(String sellerId);
 }

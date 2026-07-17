@@ -37,6 +37,14 @@
         <div class="error-message" th:if="${#fields.hasErrors('price')}" th:errors="*{price}">가격 오류</div>
     </div>
 
+    <div class="form-group">
+        <label for="grade">상품 등급</label>
+        <select id="grade" th:field="*{grade}" th:errorclass="field-error">
+            <option th:each="g : ${grades}" th:value="${g}" th:text="${g}"></option>
+        </select>
+        <div class="error-message" th:if="${#fields.hasErrors('grade')}" th:errors="*{grade}">등급 오류</div>
+    </div>
+
     <button class="btn" type="submit">수정 완료</button>
 </form>
 </body>

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import used.system.product.ProductGrade;
+import used.system.product.ProductUpdateDto;
 
 @Setter
 @Getter
@@ -24,6 +25,11 @@ public class ProductUpdateForm {
 
     @NotNull
     private ProductGrade grade;
+
+
+    public ProductUpdateDto toDto(){
+        return new ProductUpdateDto(title, description, price, grade);
+    }
 
     public ProductUpdateForm(){
 

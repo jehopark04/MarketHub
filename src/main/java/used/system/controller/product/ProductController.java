@@ -12,6 +12,7 @@ import used.system.member.Member;
 import used.system.product.Product;
 import used.system.product.ProductGrade;
 import used.system.product.ProductService;
+import used.system.product.ProductUpdateDto;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class ProductController {
     }
 
 
-    @GetMapping("products/new")
+    @GetMapping("/products/new")
     public String addProductForm(Model model, @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member){
         if (member == null){
             return "redirect:/login";
@@ -47,7 +48,7 @@ public class ProductController {
      * 로그인을 했다 싶으면 이제 제품 등록
      *
      */
-    @PostMapping("products")
+    @PostMapping("/products")
     public String addProduct(@Validated @ModelAttribute("productCreateForm") ProductForm productForm, BindingResult bindingResult,
                              @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false)Member loginMember){
 
@@ -68,6 +69,48 @@ public class ProductController {
         Product product = productService.findById(productId);
         model.addAttribute("product", product);
         return "product/item";
+    }
+
+    @GetMapping("/products/{productId}/edit")
+    public String editForm(@SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member, @PathVariable Long productId, Model model){
+
+        if (member == null){
+            return "redirect:/login";
+        }
+        Product product = productService.findByIdAndOwner(productId, member.getLoginId());
+        ProductUpdateForm productUpdateForm = new ProductUpdateForm();
+
+        productUpdateForm.setTitle(product.getTitle());
+        productUpdateForm.setDescription(product.getDescription());
+        productUpdateForm.setPrice(product.getPrice());
+        productUpdateForm.setGrade(product.getGrade());
+
+        model.addAttribute("productUpdateForm",productUpdateForm);
+        model.addAttribute("productId", productId);
+
+        return "product/editForm";
+
+    }
+
+
+    @PostMapping("/products/{productId}/edit")
+    public String edit(@SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false)Member member, @PathVariable Long productId,
+                       @Validated @ModelAttribute("productUpdateForm") ProductUpdateForm productUpdateForm, BindingResult bindingResult, Model model){
+        if (member == null){
+            return "redirect:/login";
+        }
+
+        if (bindingResult.hasErrors()){
+            model.addAttribute("productId", productId);
+            return "product/editForm";
+        }
+
+        ProductUpdateDto productUpdateDto = productUpdateForm.toDto();
+
+        productService.editProduct(productId, member.getLoginId(), productUpdateDto);
+        return "redirect:/my-page/products";
+
+
     }
 
 

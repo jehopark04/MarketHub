@@ -2,6 +2,7 @@ package used.system.product;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import used.system.exception.ForbiddenException;
 import used.system.exception.ProductNotFoundException;
 
 import java.util.List;
@@ -35,5 +36,31 @@ public class ProductServiceImpl implements ProductService{
     public List<Product> findBySellerId(String sellerId){
         return productRepository.findBySellerId(sellerId);
     }
+
+
+
+    @Override
+    public Product findByIdAndOwner(Long productId, String loginId) {
+        return getOwnerProduct(productId, loginId);
+    }
+
+    @Override
+    public void editProduct(Long productId, String loginId, ProductUpdateDto dto) {
+        Product product = getOwnerProduct(productId, loginId);
+        product.update(dto.title(), dto.description(), dto.price(), dto.grade());
+    }
+
+    private Product getOwnerProduct(Long productId, String loginId){
+        Product product = findById(productId);
+        if (!product.getSellerId().equals(loginId)){
+            throw new ForbiddenException("본인 상품만 접근할 수 있습니다.");
+        }
+
+        return product;
+    }
+
+
+
+
 
 }

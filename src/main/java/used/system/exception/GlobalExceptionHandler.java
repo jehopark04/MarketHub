@@ -25,4 +25,11 @@ public class GlobalExceptionHandler {
         model.addAttribute("message", e.getMessage());
         return "error/memberNotFound";
     }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(ForbiddenException.class)
+    public String handlerForbidden(ForbiddenException e, Model model){
+        model.addAttribute("message", e.getMessage());
+        return "error/forbidden";
+    }
 }

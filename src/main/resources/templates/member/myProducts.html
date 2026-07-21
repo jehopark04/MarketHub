@@ -44,7 +44,8 @@
         <td>
             <div class="actions">
                 <a class="btn btn-sm" th:href="@{/products/{id}/edit(id=${product.id})}">수정</a>
-                <form th:action="@{/products/{id}/delete(id=${product.id})}" method="post">
+                <form th:action="@{/products/{id}/delete(id=${product.id})}" method="post"
+                      onsubmit="return confirm('상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')">
                     <button class="btn btn-sm btn-danger" type="submit">삭제</button>
                 </form>
             </div>

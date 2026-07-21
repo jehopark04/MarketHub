@@ -34,4 +34,9 @@ public class MemoryProductRepository implements ProductRepository{
         return productMap.values().stream()
                 .filter(product -> product.getSellerId().equals(sellerId)).collect(Collectors.toList());
     }
+
+    @Override
+    public void delete(Long id) {
+        productMap.remove(id);
+    }
 }

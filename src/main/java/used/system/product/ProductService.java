@@ -10,6 +10,7 @@ public interface ProductService {
     List<Product> findBySellerId(String sellerId);
     void editProduct(Long productId, String loginId, ProductUpdateDto productUpdateDto);
     Product findByIdAndOwner(Long productId, String loginId);
+    void deleteProduct(Long productId, String loginId);
 
 
 }

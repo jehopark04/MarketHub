@@ -114,6 +114,16 @@ public class ProductController {
     }
 
 
+    @PostMapping("products/{productId}/delete")
+    public String delete(@SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false)Member loginMember, @PathVariable Long productId){
+        if(loginMember == null){
+            return "redirect:/login";
+        }
+        productService.deleteProduct(productId, loginMember.getLoginId());
+        return "redirect:/my-page/products";
+    }
+
+
 
     @ModelAttribute("grades") // 아 이걸로 고를수았는 판을 주고 이 판에서 골라진걸 post로 바인딩해서 set시키는 그림
     public ProductGrade[] grades(){

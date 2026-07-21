@@ -45,10 +45,19 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
+    public void deleteProduct(Long productId, String loginId) {
+        getOwnerProduct(productId, loginId);
+        productRepository.delete(productId);
+
+    }
+
+    @Override
     public void editProduct(Long productId, String loginId, ProductUpdateDto dto) {
         Product product = getOwnerProduct(productId, loginId);
         product.update(dto.title(), dto.description(), dto.price(), dto.grade());
     }
+
+
 
     private Product getOwnerProduct(Long productId, String loginId){
         Product product = findById(productId);

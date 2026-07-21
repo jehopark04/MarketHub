@@ -36,3 +36,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Claude Code 하네스
+_workspace/

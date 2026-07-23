@@ -12,35 +12,28 @@ import used.system.product.ProductUpdateDto;
 @Getter
 public class ProductUpdateForm {
 
-    @NotBlank(message = "제목을 입력하세요.")
-    @Size(max = 30, message = "30자 이내로 입력하셔야 합니다. ")
-    private String title;
+  @NotBlank(message = "제목을 입력하세요.")
+  @Size(max = 30, message = "30자 이내로 입력하셔야 합니다. ")
+  private String title;
 
+  @Size(max = 250, message = "250자 이내로 입력해주세요.")
+  private String description;
 
-    @Size(max = 250, message = "250자 이내로 입력해주세요.")
-    private String description;
+  @NotNull(message = "가격을 입력해주셔야 합니다.")
+  private Integer price; // int는 null이 될수 없다. -> TypeMismatchException이 발생함 그러니 Integer가 들어가야함
 
-    @NotNull(message = "가격을 입력해주셔야 합니다.")
-    private Integer price; // int는 null이 될수 없다. -> TypeMismatchException이 발생함 그러니 Integer가 들어가야함
+  @NotNull private ProductGrade grade;
 
-    @NotNull
-    private ProductGrade grade;
+  public ProductUpdateDto toDto() {
+    return new ProductUpdateDto(title, description, price, grade);
+  }
 
+  public ProductUpdateForm() {}
 
-    public ProductUpdateDto toDto(){
-        return new ProductUpdateDto(title, description, price, grade);
-    }
-
-    public ProductUpdateForm(){
-
-    }
-
-    public ProductUpdateForm(String title, String description, Integer price, ProductGrade grade) {
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.grade = grade;
-    }
-
-
+  public ProductUpdateForm(String title, String description, Integer price, ProductGrade grade) {
+    this.title = title;
+    this.description = description;
+    this.price = price;
+    this.grade = grade;
+  }
 }

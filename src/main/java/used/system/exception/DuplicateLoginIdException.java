@@ -1,7 +1,7 @@
 package used.system.exception;
 
 public class DuplicateLoginIdException extends RuntimeException {
-    public DuplicateLoginIdException(String message) {
-        super(message);
-    }
+  public DuplicateLoginIdException(String message) {
+    super(message);
+  }
 }

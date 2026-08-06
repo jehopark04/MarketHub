@@ -39,3 +39,6 @@ out/
 
 # Claude Code 하네스
 _workspace/
+
+# Claude Code — 개인 권한 설정(추적 안 함)
+.claude/settings.local.json

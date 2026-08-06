@@ -53,7 +53,7 @@ class MemoryProductRepositoryTest {
 
     repository.delete(saved.getId());
 
-    assertThat(repository.findById(saved.getId())).isNull();
+    assertThat(repository.findById(saved.getId())).isEmpty();
     assertThat(repository.findAll()).isEmpty();
   }
 }

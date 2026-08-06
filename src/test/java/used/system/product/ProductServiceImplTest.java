@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +34,7 @@ class ProductServiceImplTest {
   @Test
   @DisplayName("존재하지 않는 상품을 조회하면 ProductNotFoundException이 발생한다")
   void findById_notFound() {
-    given(productRepository.findById(999L)).willReturn(null);
+    given(productRepository.findById(999L)).willReturn(Optional.empty());
 
     assertThatThrownBy(() -> productService.findById(999L))
         .isInstanceOf(ProductNotFoundException.class);
@@ -43,7 +44,7 @@ class ProductServiceImplTest {
   @DisplayName("본인 상품을 수정하면 값이 변경된다")
   void editProduct_owner() {
     Product product = ownedProduct();
-    given(productRepository.findById(1L)).willReturn(product);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
     ProductUpdateDto dto = new ProductUpdateDto("새제목", "새설명입니다", 20000, ProductGrade.S);
 
     productService.editProduct(1L, "userA", dto);
@@ -57,7 +58,7 @@ class ProductServiceImplTest {
   @DisplayName("타인의 상품을 수정하려 하면 ForbiddenException이 발생하고 값은 그대로다")
   void editProduct_notOwner() {
     Product product = ownedProduct();
-    given(productRepository.findById(1L)).willReturn(product);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
     ProductUpdateDto dto = new ProductUpdateDto("탈취제목", "탈취설명입니다", 1, ProductGrade.C);
 
     assertThatThrownBy(() -> productService.editProduct(1L, "userB", dto))
@@ -69,7 +70,7 @@ class ProductServiceImplTest {
   @Test
   @DisplayName("본인 상품을 삭제하면 저장소의 delete가 호출된다")
   void deleteProduct_owner() {
-    given(productRepository.findById(1L)).willReturn(ownedProduct());
+    given(productRepository.findById(1L)).willReturn(Optional.of(ownedProduct()));
 
     productService.deleteProduct(1L, "userA");
 
@@ -79,7 +80,7 @@ class ProductServiceImplTest {
   @Test
   @DisplayName("타인의 상품을 삭제하려 하면 ForbiddenException이 발생하고 삭제되지 않는다")
   void deleteProduct_notOwner() {
-    given(productRepository.findById(1L)).willReturn(ownedProduct());
+    given(productRepository.findById(1L)).willReturn(Optional.of(ownedProduct()));
 
     assertThatThrownBy(() -> productService.deleteProduct(1L, "userB"))
         .isInstanceOf(ForbiddenException.class);
@@ -90,7 +91,7 @@ class ProductServiceImplTest {
   @Test
   @DisplayName("없는 상품을 삭제하려 하면 ProductNotFoundException이 발생한다")
   void deleteProduct_notFound() {
-    given(productRepository.findById(999L)).willReturn(null);
+    given(productRepository.findById(999L)).willReturn(Optional.empty());
 
     assertThatThrownBy(() -> productService.deleteProduct(999L, "userA"))
         .isInstanceOf(ProductNotFoundException.class);
@@ -102,7 +103,7 @@ class ProductServiceImplTest {
   @DisplayName("findByIdAndOwner는 본인 상품이면 상품을 반환한다")
   void findByIdAndOwner_owner() {
     Product product = ownedProduct();
-    given(productRepository.findById(1L)).willReturn(product);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
     assertThat(productService.findByIdAndOwner(1L, "userA")).isSameAs(product);
   }

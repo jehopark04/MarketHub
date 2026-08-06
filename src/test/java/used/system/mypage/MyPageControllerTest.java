@@ -19,8 +19,8 @@ import used.system.product.ProductGrade;
 import used.system.product.ProductService;
 
 /**
- * MyPageController 단위 테스트 - 스프링 컨텍스트/MockMvc 없이 컨트롤러 메서드를 직접 호출한다. 세션 회원(@SessionAttribute)은 파라미터로 직접
- * 넘기고, Model은 Spring이 제공하는 단순 구현체(ConcurrentModel)를 사용한다.
+ * MyPageController 단위 테스트 - 스프링 컨텍스트/MockMvc 없이 컨트롤러 메서드를 직접 호출한다. 세션 회원(@SessionAttribute)은 파라미터로
+ * 직접 넘기고, Model은 Spring이 제공하는 단순 구현체(ConcurrentModel)를 사용한다.
  */
 @ExtendWith(MockitoExtension.class)
 class MyPageControllerTest {
@@ -66,8 +66,7 @@ class MyPageControllerTest {
   void myProducts_loggedIn() {
     Model model = new ConcurrentModel();
     Member member = new Member("userA", "에이", "password1");
-    List<Product> myProducts =
-        List.of(new Product("userA", "내상품", "설명입니다", 10000, ProductGrade.A));
+    List<Product> myProducts = List.of(new Product("userA", "내상품", "설명입니다", 10000, ProductGrade.A));
     given(productService.findBySellerId("userA")).willReturn(myProducts);
 
     String view = myPageController.myProducts(model, member);

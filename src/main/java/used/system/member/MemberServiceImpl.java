@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import used.system.exception.DuplicateLoginIdException;
+import used.system.exception.MemberNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +25,9 @@ public class MemberServiceImpl implements MemberService {
 
   @Override
   public Member findMember(Long id) {
-    return memberRepository.findById(id);
+    return memberRepository
+        .findById(id)
+        .orElseThrow(() -> new MemberNotFoundException("회원을 찾을 수 없습니다. id = " + id));
   }
 
   @Override

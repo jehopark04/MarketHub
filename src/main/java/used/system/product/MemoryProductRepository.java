@@ -18,8 +18,8 @@ public class MemoryProductRepository implements ProductRepository {
   }
 
   @Override
-  public Product findById(Long id) {
-    return productMap.get(id);
+  public Optional<Product> findById(Long id) {
+    return Optional.ofNullable(productMap.get(id));
   }
 
   @Override

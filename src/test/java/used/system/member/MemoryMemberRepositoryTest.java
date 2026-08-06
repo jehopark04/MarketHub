@@ -33,15 +33,15 @@ class MemoryMemberRepositoryTest {
   void findById() {
     Member saved = repository.save(new Member("userA", "에이", "password1"));
 
-    Member found = repository.findById(saved.getId());
+    Optional<Member> found = repository.findById(saved.getId());
 
-    assertThat(found).isSameAs(saved);
+    assertThat(found).containsSame(saved);
   }
 
   @Test
-  @DisplayName("없는 id로 조회하면 null을 반환한다")
+  @DisplayName("없는 id로 조회하면 빈 Optional을 반환한다")
   void findById_notFound() {
-    assertThat(repository.findById(999L)).isNull();
+    assertThat(repository.findById(999L)).isEmpty();
   }
 
   @Test

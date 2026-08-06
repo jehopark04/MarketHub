@@ -1,4 +1,4 @@
-package used.system.mypage;
+package used.system.controller.myPage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -12,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
-import used.system.controller.myPage.MyPageController;
 import used.system.member.Member;
 import used.system.product.Product;
 import used.system.product.ProductGrade;

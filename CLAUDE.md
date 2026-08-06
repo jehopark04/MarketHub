@@ -11,8 +11,16 @@ Spring Boot 4 / Java 21 / Gradle / Thymeleaf + Spring WebMVC / Lombok
   `-webmvc-test`, `-thymeleaf-test`. `spring-boot-starter-web` / `spring-boot-starter-test`가 아니다.
 
 ## 구조 규칙
-`used.system` 아래에 **계층이 아니라 도메인으로 먼저 나눈다.** 도메인 패키지 안에
-Service·ServiceImpl·Repository·MemoryRepository가 함께 산다.
+`used.system` 아래 배치는 다음과 같다. **새 파일을 만들 때 이 자리를 지킨다.**
+
+| 대상 | 위치 | 예 |
+|---|---|---|
+| 도메인 객체·Service·ServiceImpl·Repository·MemoryRepository | `used.system.<도메인>` — 한 패키지에 함께 산다 | `used.system.product.ProductServiceImpl` |
+| Controller·Form·세션 상수 | `used.system.controller.<도메인>` | `used.system.controller.product.ProductForm` |
+| 커스텀 예외·`GlobalExceptionHandler` | `used.system.exception` | `used.system.exception.ProductNotFoundException` |
+
+즉 **서비스·리포지토리 계층은 도메인으로 나누고, 웹 계층과 예외는 계층으로 모은다.**
+컨트롤러를 도메인 패키지(`used.system.product`)에 두지 않는다.
 
 - **Controller → Service(인터페이스) → Repository(인터페이스)** 단방향. 역방향 금지.
 - 생성자 주입(`@RequiredArgsConstructor` + `private final`). 필드/세터 주입 금지.
@@ -33,13 +41,14 @@ Service·ServiceImpl·Repository·MemoryRepository가 함께 산다.
 - 에러 뷰는 `error/` 하위 템플릿, `model`에 `message` 전달.
 
 ## 인증 · 폼
-- 세션 키는 `SessionConst.LOGIN_MEMBER` 상수. 문자열 하드코딩 금지.
+- 세션 키는 `used.system.controller.member.SessionConst`의 `LOGIN_MEMBER` 상수. 문자열 하드코딩 금지.
 - `@SessionAttribute(required = false)`로 꺼내고 `null`이면 `redirect:/login`.
 - 폼 객체에 Bean Validation, 컨트롤러에서 `@Validated` + `BindingResult`.
   `hasErrors()`면 해당 폼 뷰로 되돌린다.
 
 ## 테스트
-- 위치: `src/test/java/used/`, 소스와 동일 패키지 구조.
+- 위치: `src/test/java/used/`, **소스와 동일 패키지 구조**. 컨트롤러 테스트도 마찬가지로
+  `used.system.controller.<도메인>`에 둔다.
 - **단위테스트만 작성한다.** 인메모리 리포지토리라 Service 테스트에 실제 구현을 그대로 쓸 수 있다.
 - **`@SpringBootTest`를 쓰지 않는다** — 느리고 통합 성격이라 단위테스트 범위를 벗어난다.
   기존 `SystemApplicationTests`는 Spring Initializr 기본 생성물이라 예외(지적·수정 대상 아님).

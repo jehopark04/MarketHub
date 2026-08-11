@@ -2,6 +2,7 @@ package used.system.controller.member;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,7 +30,8 @@ public class MemberController {
   public String create(
       @Validated @ModelAttribute("memberJoinForm") MemberForm memberForm,
       BindingResult bindingResult) {
-    if (!memberForm.getPassword().equals(memberForm.getPasswordConfirm())) { // 비밀번호 확인 검증
+    // 파라미터 자체가 누락되면 값이 null로 바인딩되므로 null-safe 비교여야 한다
+    if (!Objects.equals(memberForm.getPassword(), memberForm.getPasswordConfirm())) { // 비밀번호 확인 검증
       bindingResult.rejectValue("passwordConfirm", "passwordMismatch", "비밀번호가 일치하지 않습니다.");
     }
 

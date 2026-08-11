@@ -28,6 +28,37 @@ class MemoryProductRepositoryTest {
   }
 
   @Test
+  @DisplayName("id로 저장된 상품을 조회한다")
+  void findById() {
+    Product saved = repository.save(new Product("userA", "상품", "설명입니다", 10000, ProductGrade.A));
+
+    assertThat(repository.findById(saved.getId())).containsSame(saved);
+  }
+
+  @Test
+  @DisplayName("없는 id로 조회하면 빈 Optional을 반환한다")
+  void findById_notFound() {
+    assertThat(repository.findById(999L)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("findAll은 판매자와 무관하게 저장된 모든 상품을 반환한다")
+  void findAll() {
+    repository.save(new Product("userA", "상품1", "설명입니다", 10000, ProductGrade.A));
+    repository.save(new Product("userB", "상품2", "설명입니다", 20000, ProductGrade.B));
+
+    assertThat(repository.findAll())
+        .extracting(Product::getTitle)
+        .containsExactlyInAnyOrder("상품1", "상품2");
+  }
+
+  @Test
+  @DisplayName("저장된 상품이 없으면 findAll은 빈 리스트를 반환한다")
+  void findAll_empty() {
+    assertThat(repository.findAll()).isEmpty();
+  }
+
+  @Test
   @DisplayName("findBySellerId는 해당 판매자의 상품만 반환한다")
   void findBySellerId_filtersBySeller() {
     repository.save(new Product("userA", "A상품1", "설명입니다", 10000, ProductGrade.A));

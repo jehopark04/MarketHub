@@ -69,6 +69,14 @@ class MemoryMemberRepositoryTest {
     repository.save(new Member("userA", "에이", "password1"));
     repository.save(new Member("userB", "비", "password2"));
 
-    assertThat(repository.findAll()).hasSize(2);
+    assertThat(repository.findAll())
+        .extracting(Member::getLoginId)
+        .containsExactlyInAnyOrder("userA", "userB");
+  }
+
+  @Test
+  @DisplayName("저장된 회원이 없으면 findAll은 빈 리스트를 반환한다")
+  void findAll_empty() {
+    assertThat(repository.findAll()).isEmpty();
   }
 }

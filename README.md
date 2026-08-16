@@ -53,9 +53,9 @@ Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계
 - [x] 상품 삭제 (확인 창 + 소유권 검증)
 - [x] 전역 예외 처리 (`@ControllerAdvice` + 커스텀 에러 페이지)
 
-### Level 2 — 비즈니스 규칙 (예정)
+### Level 2 — 비즈니스 규칙 (진행 중)
 
-- [ ] 로그인 체크 인터셉터 (`LoginCheckInterceptor` — 컨트롤러마다 반복되는 세션 체크 통합)
+- [x] 로그인 체크 인터셉터 (`LoginCheckInterceptor` + `WebConfig` — 컨트롤러마다 반복되던 세션 체크를 하나로 통합)
 - [ ] 검색 / 필터 (`/products?keyword=&minPrice=&maxPrice=`)
 - [ ] 찜 기능 (중복 찜 방지 · 본인 상품 찜 불가)
 - [ ] 상품 문의 / 판매자 답변 (작성자·판매자 권한 체크)
@@ -67,10 +67,14 @@ Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계
 - [ ] `@RestControllerAdvice` 기반 공통 JSON 예외 응답 (`{ "code": ..., "message": ... }`)
 - [ ] API 전용 DTO
 
+### 부가 작업 (레벨과 무관 — 아무 때나 끼워 넣어도 되는 항목)
+
+- [ ] 백엔드 로깅 도입 (요청 흐름이 아니라 로그 레벨·구조화 로깅 관점의 일반 로깅 정비)
+
 ### 이후 로드맵
 
 - [ ] Memory Repository → JPA 전환
-- [ ] Spring Security 도입 (2차 리팩토링)
+- [ ] Spring Security 도입 (2차 리팩토링, JPA 전환 이후)
 
 ---
 
@@ -112,6 +116,9 @@ HTML Form은 GET/POST만 지원하므로 삭제·수정도 POST로 처리하고,
 ```
 used.system
  ├── SystemApplication
+ ├── config
+ │    ├── WebConfig               # 인터셉터 등록 (경로별 로그인 요구 여부 배선)
+ │    └── LoginCheckInterceptor   # 세션 미인증 요청을 컨트롤러 진입 전에 차단
  ├── controller
  │    ├── home        # 웰컴 페이지
  │    ├── member      # 회원가입, 로그인/로그아웃, SessionConst, Form 객체
@@ -165,11 +172,36 @@ controller → service → repository
 ### 5. 보안 검증은 서버가, 화면 동선은 안내일 뿐
 
 - 버튼 숨기기/페이지 동선 차단은 보안이 아니다 — URL 직접 접근은 언제나 가능하다.
-- 로그인 체크: GET(폼 진입)은 UX용, **POST(데이터 변경)는 방어용** — 둘 다 한다.
-- 소유권 검증("본인 상품만 수정·삭제 가능")은 어떤 경로로 호출돼도 우회 불가능하도록 **서비스 계층**에 둔다.
+- **인증**(로그인 여부)은 `LoginCheckInterceptor`가 컨트롤러 진입 전에 일괄 차단한다.
+  - 인터셉터의 경로 매칭은 HTTP 메서드를 구분하지 못한다 — `/products`처럼 GET(조회)은
+    공개, POST(등록)만 보호해야 하는 경로는 `guardedMethods`로 메서드를 좁혀 별도 등록한다.
+  - "전부 막고 열 곳만 뚫는다" 방식(`excludePathPatterns`)을 쓴다. 반대로 막을 곳만
+    나열하면, 새 페이지를 추가하며 등록을 잊었을 때 그 페이지가 조용히 무방비로 열린다.
+- **인가**(소유권 검증, "본인 상품만 수정·삭제 가능")는 인터셉터가 아니라 **서비스 계층**에
+  둔다. 인터셉터는 "누구냐"만 알고 "이 자원이 이 사람 것이냐"는 데이터를 봐야 판단
+  가능한 비즈니스 규칙이라, 어떤 호출 경로로 들어와도 우회 불가능한 서비스가 최종 방어선이다.
 - 삭제 확인 창(`confirm`)은 실수 방지용 UX일 뿐 보안 장치가 아니다 — JS를 끄거나 직접 요청을 보내면 무력화된다.
 
 ### 6. 도메인 응집도
 
 - 무분별한 setter를 열어두지 않는다 — 상태 변경은 의미 있는 메서드(`product.update(...)`)로만.
 - 수정 시각(`updatedAt`) 갱신처럼 상태 변경에 따라오는 규칙은 도메인 메서드 안에서 자동 처리.
+
+---
+
+## 테스트
+
+**단위 테스트만 작성한다.** `@SpringBootTest`, `MockMvc` 등 스프링 컨텍스트를 띄우는 테스트는
+쓰지 않는다 — 느리고, 이 프로젝트의 학습 목표(계층 간 책임 분리를 코드로 확인하는 것)에는
+컨트롤러/서비스 메서드를 직접 호출하는 것으로 충분하다.
+
+- 컨트롤러: `BindingResult`는 `BeanPropertyBindingResult`, 세션은 `MockHttpServletRequest`로
+  직접 만들어 넘긴다. 둘 다 컨텍스트 없이 동작하는 단순 구현체다.
+- 폼 검증: `Validation.buildDefaultValidatorFactory()`로 Validator를 직접 만든다.
+- 인터셉터 배선(`WebConfigTest`): `InterceptorRegistry`에서 등록 결과를 직접 꺼내
+  `DispatcherServlet`이 하는 매칭·`preHandle` 순회를 그대로 흉내 낸다. 어느 URL이 보호돼야
+  하는지는 정책 판단이라 테스트 대상이 아니고, `WebConfig`에 적어둔 의도대로 실제 매칭이
+  일어나는지(배선)만 검증한다.
+- 검증 신뢰: 새 테스트가 실제로 회귀를 잡는지는 뮤테이션(정상 동작하던 코드를 일부러
+  깨뜨려보고 해당 테스트만 실패하는지 확인)으로 확인한다. 초록 불이 켜져도 "왜 초록인지"를
+  설명 못 하면 허수 테스트일 수 있다.

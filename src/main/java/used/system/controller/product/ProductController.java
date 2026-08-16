@@ -28,31 +28,17 @@ public class ProductController {
   }
 
   @GetMapping("/products/new")
-  public String addProductForm(
-      Model model,
-      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member) {
-    if (member == null) {
-      return "redirect:/login";
-    }
+  public String addProductForm(Model model) {
     model.addAttribute("productCreateForm", new ProductForm());
     return "product/addForm";
   }
 
-  /**
-   * 우선 로그인 후 제품 추가가 가능하기때문에 세션을 통해서 검증및 회원이 누군지를 알아야하는 상황임 session을 통해서 현재 로그인중인 사람을 가져오고 만약 null이면
-   * 로그인화면으로 견인
-   *
-   * <p>로그인을 했다 싶으면 이제 제품 등록
-   */
+  /** 판매자는 폼 입력이 아니라 세션에서 결정한다. 남의 이름으로 등록되는 걸 막으려면 이 값은 클라이언트가 보낸 데이터에서 오면 안 된다. */
   @PostMapping("/products")
   public String addProduct(
       @Validated @ModelAttribute("productCreateForm") ProductForm productForm,
       BindingResult bindingResult,
-      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member loginMember) {
-
-    if (loginMember == null) {
-      return "redirect:/login";
-    }
+      @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member loginMember) {
 
     if (bindingResult.hasErrors()) {
       return "product/addForm";
@@ -77,13 +63,10 @@ public class ProductController {
 
   @GetMapping("/products/{productId}/edit")
   public String editForm(
-      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member,
+      @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member member,
       @PathVariable Long productId,
       Model model) {
 
-    if (member == null) {
-      return "redirect:/login";
-    }
     Product product = productService.findByIdAndOwner(productId, member.getLoginId());
     ProductUpdateForm productUpdateForm = new ProductUpdateForm();
 
@@ -100,14 +83,11 @@ public class ProductController {
 
   @PostMapping("/products/{productId}/edit")
   public String edit(
-      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member,
+      @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member member,
       @PathVariable Long productId,
       @Validated @ModelAttribute("productUpdateForm") ProductUpdateForm productUpdateForm,
       BindingResult bindingResult,
       Model model) {
-    if (member == null) {
-      return "redirect:/login";
-    }
 
     if (bindingResult.hasErrors()) {
       model.addAttribute("productId", productId);
@@ -120,13 +100,10 @@ public class ProductController {
     return "redirect:/my-page/products";
   }
 
-  @PostMapping("products/{productId}/delete")
+  @PostMapping("/products/{productId}/delete")
   public String delete(
-      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member loginMember,
+      @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member loginMember,
       @PathVariable Long productId) {
-    if (loginMember == null) {
-      return "redirect:/login";
-    }
     productService.deleteProduct(productId, loginMember.getLoginId());
     return "redirect:/my-page/products";
   }

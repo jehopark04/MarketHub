@@ -29,9 +29,10 @@ import used.system.product.ProductUpdateDto;
 
 /**
  * ProductController 단위 테스트 - 스프링 컨텍스트/MockMvc 없이 컨트롤러 메서드를 직접 호출한다. 세션 회원(@SessionAttribute)은 파라미터로
- * 직접 넘기고, 비로그인은 null로 표현한다.
+ * 직접 넘긴다.
  *
- * <p>소유권 검증(403)은 서비스의 책임이므로 여기서는 "로그인 가드가 동작하는가", "서비스에 올바른 인자를 넘기는가", "모델에 무엇을 담는가"에 집중한다.
+ * <p>로그인 가드는 LoginCheckInterceptor의 책임이라 여기서 비로그인 경우를 다루지 않는다(LoginCheckInterceptorTest 참고). 소유권
+ * 검증(403)도 서비스의 책임이다. 여기서는 "서비스에 올바른 인자를 넘기는가", "모델에 무엇을 담는가"에 집중한다.
  */
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
@@ -91,22 +92,11 @@ class ProductControllerTest {
   // ---------- 등록 ----------
 
   @Test
-  @DisplayName("비로그인 상태로 등록 폼에 접근하면 로그인 페이지로 리다이렉트한다")
-  void addProductForm_notLoggedIn() {
+  @DisplayName("등록 폼에 접근하면 값이 비어 있는 폼 객체를 모델에 담는다")
+  void addProductForm() {
     Model model = new ConcurrentModel();
 
-    String view = productController.addProductForm(model, null);
-
-    assertThat(view).isEqualTo("redirect:/login");
-    assertThat(model.getAttribute("productCreateForm")).isNull();
-  }
-
-  @Test
-  @DisplayName("로그인 상태로 등록 폼에 접근하면 값이 비어 있는 폼 객체를 모델에 담는다")
-  void addProductForm_loggedIn() {
-    Model model = new ConcurrentModel();
-
-    String view = productController.addProductForm(model, loginMember);
+    String view = productController.addProductForm(model);
 
     assertThat(view).isEqualTo("product/addForm");
     assertThat(model.getAttribute("productCreateForm"))
@@ -119,32 +109,6 @@ class ProductControllerTest {
               assertThat(form.getPrice()).isNull();
               assertThat(form.getGrade()).isNull();
             });
-  }
-
-  @Test
-  @DisplayName("비로그인 상태로 등록을 시도하면 저장하지 않고 로그인 페이지로 리다이렉트한다")
-  void addProduct_notLoggedIn() {
-    ProductForm form = createForm();
-    BindingResult bindingResult = new BeanPropertyBindingResult(form, "productCreateForm");
-
-    String view = productController.addProduct(form, bindingResult, null);
-
-    assertThat(view).isEqualTo("redirect:/login");
-    verify(productService, never()).join(any());
-  }
-
-  @Test
-  @DisplayName("비로그인이면서 검증 에러도 있으면 폼이 아니라 로그인 페이지로 보낸다")
-  void addProduct_notLoggedIn_takesPrecedenceOverValidation() {
-    // 로그인 가드가 검증 분기보다 먼저 실행되어야 한다 (누구인지 모르는 요청은 폼을 다시 보여줄 대상이 아니다)
-    ProductForm form = createForm();
-    BindingResult bindingResult = new BeanPropertyBindingResult(form, "productCreateForm");
-    bindingResult.rejectValue("title", "NotBlank");
-
-    String view = productController.addProduct(form, bindingResult, null);
-
-    assertThat(view).isEqualTo("redirect:/login");
-    verify(productService, never()).join(any());
   }
 
   @Test
@@ -183,17 +147,6 @@ class ProductControllerTest {
   // ---------- 수정 ----------
 
   @Test
-  @DisplayName("비로그인 상태로 수정 폼에 접근하면 로그인 페이지로 리다이렉트한다")
-  void editForm_notLoggedIn() {
-    Model model = new ConcurrentModel();
-
-    String view = productController.editForm(null, 1L, model);
-
-    assertThat(view).isEqualTo("redirect:/login");
-    verify(productService, never()).findByIdAndOwner(anyLong(), anyString());
-  }
-
-  @Test
   @DisplayName("수정 폼에는 기존 상품 값이 채워지고 폼 전송용 productId가 함께 담긴다")
   void editForm_fillsExistingValues() {
     Model model = new ConcurrentModel();
@@ -209,19 +162,6 @@ class ProductControllerTest {
     assertThat(form.getPrice()).isEqualTo(10000);
     assertThat(form.getGrade()).isEqualTo(ProductGrade.B);
     assertThat(model.getAttribute("productId")).isEqualTo(1L);
-  }
-
-  @Test
-  @DisplayName("비로그인 상태로 수정을 시도하면 수정하지 않고 로그인 페이지로 리다이렉트한다")
-  void edit_notLoggedIn() {
-    ProductUpdateForm form = updateForm();
-    BindingResult bindingResult = new BeanPropertyBindingResult(form, "productUpdateForm");
-    Model model = new ConcurrentModel();
-
-    String view = productController.edit(null, 1L, form, bindingResult, model);
-
-    assertThat(view).isEqualTo("redirect:/login");
-    verify(productService, never()).editProduct(anyLong(), anyString(), any());
   }
 
   @Test
@@ -260,15 +200,6 @@ class ProductControllerTest {
   }
 
   // ---------- 삭제 ----------
-
-  @Test
-  @DisplayName("비로그인 상태로 삭제를 시도하면 삭제하지 않고 로그인 페이지로 리다이렉트한다")
-  void delete_notLoggedIn() {
-    String view = productController.delete(null, 1L);
-
-    assertThat(view).isEqualTo("redirect:/login");
-    verify(productService, never()).deleteProduct(anyLong(), anyString());
-  }
 
   @Test
   @DisplayName("삭제에 성공하면 요청자의 loginId와 함께 서비스에 위임하고 내 상품 목록으로 리다이렉트한다")

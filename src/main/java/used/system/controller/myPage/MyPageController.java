@@ -19,22 +19,14 @@ public class MyPageController {
 
   @GetMapping("/my-page")
   public String myPageForm(
-      Model model,
-      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member) {
-    if (member == null) {
-      return "redirect:/login";
-    }
+      Model model, @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member member) {
     model.addAttribute("member", member);
     return "member/myPage";
   }
 
-  @GetMapping("my-page/products")
+  @GetMapping("/my-page/products")
   public String myProducts(
-      Model model,
-      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member member) {
-    if (member == null) {
-      return "redirect:/login";
-    }
+      Model model, @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member member) {
 
     List<Product> products = productService.findBySellerId(member.getLoginId());
 

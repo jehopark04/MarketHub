@@ -38,9 +38,9 @@ public class MemberController {
     if (bindingResult.hasErrors()) {
       return "member/addform";
     }
+    Member member =
+        new Member(memberForm.getLoginId(), memberForm.getName(), memberForm.getPassword());
     try {
-      Member member =
-          new Member(memberForm.getLoginId(), memberForm.getName(), memberForm.getPassword());
       memberService.join(member);
     } catch (DuplicateLoginIdException e) {
       bindingResult.rejectValue("loginId", "duplicate", e.getMessage());

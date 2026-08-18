@@ -17,8 +17,18 @@ public class ProductController {
 
   private final ProductService productService;
 
+  /**
+   * BindingResult를 받아두기만 하고 검사하지 않는 것은 의도다. 등록·수정과 달리 조회는 잘못된 조건에 실패로 답하면 안 된다 — 주소창을 직접 고쳤거나 오래된
+   * 링크를 눌렀을 때 목록이 에러 페이지가 되어버린다.
+   *
+   * <p>이 파라미터가 있으면 스프링이 타입 변환 실패에 예외를 던지는 대신 FieldError로 기록하고 그 필드를 null로 남긴다. 필터는 null을 "조건 없음"으로
+   * 보므로, /products?minPrice=abc는 가격 조건만 빠진 채 나머지로 검색된다.
+   */
   @GetMapping("/products")
-  public String list(@ModelAttribute("productSearchCond") ProductSearchCond cond, Model model) {
+  public String list(
+      @ModelAttribute("productSearchCond") ProductSearchCond cond,
+      BindingResult bindingResult,
+      Model model) {
     List<Product> products = productService.search(cond);
     model.addAttribute("products", products);
     return "product/list";

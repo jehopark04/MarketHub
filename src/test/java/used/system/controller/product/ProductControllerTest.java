@@ -62,6 +62,11 @@ class ProductControllerTest {
     return form;
   }
 
+  /** 목록은 바인딩 오류를 읽지 않으므로 오류 없는 빈 것으로 충분하다. 실제로는 스프링이 만들어 넘긴다. */
+  private BindingResult bindingResultFor(ProductSearchCond cond) {
+    return new BeanPropertyBindingResult(cond, "productSearchCond");
+  }
+
   // ---------- 목록 / 상세 ----------
 
   @Test
@@ -72,7 +77,7 @@ class ProductControllerTest {
     ProductSearchCond cond = new ProductSearchCond();
     given(productService.search(cond)).willReturn(products);
 
-    String view = productController.list(cond, model);
+    String view = productController.list(cond, bindingResultFor(cond), model);
 
     assertThat(view).isEqualTo("product/list");
     assertThat(model.getAttribute("products")).isEqualTo(products);
@@ -89,7 +94,7 @@ class ProductControllerTest {
     cond.setGrade(ProductGrade.S);
     given(productService.search(cond)).willReturn(List.of());
 
-    productController.list(cond, model);
+    productController.list(cond, bindingResultFor(cond), model);
 
     // 컨트롤러는 조건을 해석하지 않는다. 바인딩된 그대로 넘기는 것이 이 계층의 책임이다.
     ArgumentCaptor<ProductSearchCond> captor = ArgumentCaptor.forClass(ProductSearchCond.class);

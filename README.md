@@ -2,7 +2,7 @@
 
 중고나라/당근마켓의 축소판을 직접 만들며 **Spring MVC 웹 애플리케이션의 구조를 체화**하기 위한 학습 프로젝트입니다.
 
-단순 CRUD 게시판이 아니라 회원/세션 로그인, 상품, 권한 검증, 검증(Validation), 예외 처리, (예정) 찜·검색·REST API까지 —
+단순 CRUD 게시판이 아니라 회원/세션 로그인, 상품, 권한 검증, 검증(Validation), 예외 처리, 검색·필터, (예정) 찜·REST API까지 —
 스프링 기본편 · MVC · HTTP 강의에서 배운 내용을 실제 구조로 엮는 것이 목표입니다.
 
 > 완성도 높은 서비스가 아니라 **계층형 아키텍처와 HTTP 요청/응답 설계를 몸으로 이해하는 것**이 이 프로젝트의 존재 이유입니다.
@@ -56,7 +56,7 @@ Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계
 ### Level 2 — 비즈니스 규칙 (진행 중)
 
 - [x] 로그인 체크 인터셉터 (`LoginCheckInterceptor` + `WebConfig` — 컨트롤러마다 반복되던 세션 체크를 하나로 통합)
-- [ ] 검색 / 필터 (`/products?keyword=&minPrice=&maxPrice=`)
+- [x] 검색 / 필터 (`/products?keyword=&minPrice=&maxPrice=&grade=` — 조건별 독립 적용, 빈 조건은 전체 조회)
 - [ ] 찜 기능 (중복 찜 방지 · 본인 상품 찜 불가)
 - [ ] 상품 문의 / 판매자 답변 (작성자·판매자 권한 체크)
 
@@ -93,7 +93,7 @@ HTML Form은 GET/POST만 지원하므로 삭제·수정도 POST로 처리하고,
 | 웰컴 페이지 | `/` | GET |
 | 회원가입 | `/members/new` → `/members` | GET → POST |
 | 로그인 / 로그아웃 | `/login` / `/logout` | GET·POST / POST |
-| 상품 목록 | `/products` | GET |
+| 상품 목록 / 검색 | `/products?keyword=&minPrice=&maxPrice=&grade=` | GET |
 | 상품 상세 | `/products/{id}` | GET |
 | 상품 등록 | `/products/new` → `/products` | GET → POST |
 | 상품 수정 | `/products/{id}/edit` | GET → POST |

@@ -7,9 +7,9 @@ public interface ProductService {
 
   Product findById(Long id);
 
-  List<Product> findAll();
-
   List<Product> findBySellerId(String sellerId);
+
+  List<Product> search(ProductSearchCond cond);
 
   void editProduct(Long productId, String loginId, ProductUpdateDto productUpdateDto);
 

@@ -12,5 +12,7 @@ public interface ProductRepository {
 
   List<Product> findBySellerId(String sellerId);
 
+  List<Product> search(ProductSearchCond cond);
+
   void delete(Long id);
 }

@@ -34,6 +34,30 @@ public class MemoryProductRepository implements ProductRepository {
         .collect(Collectors.toList());
   }
 
+  /**
+   * 조건에 맞는 상품만 걸러낸다.
+   *
+   * <p>필드마다 "null이면 통과"로 시작한다. ||의 단축 평가 덕분에 조건이 비어 있으면 오른쪽 비교는 실행되지 않고 그대로 통과하므로, 조건을 하나도 주지 않으면
+   * 결과가 findAll()과 같아진다. 덕분에 "검색이냐 전체 조회냐"를 호출하는 쪽에서 분기할 필요가 없다.
+   */
+  @Override
+  public List<Product> search(ProductSearchCond cond) {
+    return productMap.values().stream()
+        .filter(product -> matchesKeyword(product, cond.getKeyword()))
+        .filter(product -> cond.getMinPrice() == null || product.getPrice() >= cond.getMinPrice())
+        .filter(product -> cond.getMaxPrice() == null || product.getPrice() <= cond.getMaxPrice())
+        .filter(product -> cond.getGrade() == null || product.getGrade() == cond.getGrade())
+        .collect(Collectors.toList());
+  }
+
+  /** 빈 문자열도 조건 없음으로 본다. 검색창을 비우고 제출하면 null이 아니라 ""로 들어오기 때문이다. */
+  private boolean matchesKeyword(Product product, String keyword) {
+    if (keyword == null || keyword.isBlank()) {
+      return true;
+    }
+    return product.getTitle().toLowerCase().contains(keyword.toLowerCase());
+  }
+
   @Override
   public void delete(Long id) {
     productMap.remove(id);

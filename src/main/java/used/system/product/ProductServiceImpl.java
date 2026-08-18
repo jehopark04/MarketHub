@@ -25,13 +25,13 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public List<Product> findAll() {
-    return productRepository.findAll();
+  public List<Product> findBySellerId(String sellerId) {
+    return productRepository.findBySellerId(sellerId);
   }
 
   @Override
-  public List<Product> findBySellerId(String sellerId) {
-    return productRepository.findBySellerId(sellerId);
+  public List<Product> search(ProductSearchCond cond) {
+    return productRepository.search(cond);
   }
 
   @Override

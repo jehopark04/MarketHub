@@ -97,9 +97,8 @@ class WebConfigTest {
     }
     return true;
   }
-/**
- * 로그인 성공했을때 서버에 남는 상태를 그대로 재현한 것. 실제 memberController의 로그인 처리가 하는 일임
- */
+
+  /** 로그인 성공했을때 서버에 남는 상태를 그대로 재현한 것. 실제 memberController의 로그인 처리가 하는 일임 */
   private MockHttpSession loggedInSession() {
     MockHttpSession session = new MockHttpSession();
     session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);

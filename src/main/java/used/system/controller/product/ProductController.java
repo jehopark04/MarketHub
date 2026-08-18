@@ -9,10 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import used.system.controller.member.SessionConst;
 import used.system.member.Member;
-import used.system.product.Product;
-import used.system.product.ProductGrade;
-import used.system.product.ProductService;
-import used.system.product.ProductUpdateDto;
+import used.system.product.*;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,8 +18,8 @@ public class ProductController {
   private final ProductService productService;
 
   @GetMapping("/products")
-  public String list(Model model) {
-    List<Product> products = productService.findAll();
+  public String list(@ModelAttribute("productSearchCond") ProductSearchCond cond, Model model) {
+    List<Product> products = productService.search(cond);
     model.addAttribute("products", products);
     return "product/list";
   }

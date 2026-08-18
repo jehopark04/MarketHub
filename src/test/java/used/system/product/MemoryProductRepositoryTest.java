@@ -87,4 +87,107 @@ class MemoryProductRepositoryTest {
     assertThat(repository.findById(saved.getId())).isEmpty();
     assertThat(repository.findAll()).isEmpty();
   }
+
+  // ---------- 검색 / 필터 ----------
+
+  /** 검색 테스트용 고정 데이터. 제목·가격·등급이 서로 달라 조건별로 걸러지는 대상이 갈린다. */
+  private void 검색용_상품_저장() {
+    repository.save(new Product("userA", "맥북 프로 16", "설명입니다", 2_000_000, ProductGrade.S));
+    repository.save(new Product("userA", "맥북 에어", "설명입니다", 1_000_000, ProductGrade.A));
+    repository.save(new Product("userB", "아이패드", "설명입니다", 500_000, ProductGrade.B));
+  }
+
+  private ProductSearchCond cond(String keyword, Integer min, Integer max, ProductGrade grade) {
+    ProductSearchCond cond = new ProductSearchCond();
+    cond.setKeyword(keyword);
+    cond.setMinPrice(min);
+    cond.setMaxPrice(max);
+    cond.setGrade(grade);
+    return cond;
+  }
+
+  @Test
+  @DisplayName("조건이 전부 비어 있으면 전체 목록과 같다")
+  void search_noCondition() {
+    검색용_상품_저장();
+
+    assertThat(repository.search(cond(null, null, null, null)))
+        .containsExactlyInAnyOrderElementsOf(repository.findAll());
+  }
+
+  @Test
+  @DisplayName("키워드는 제목에 포함된 상품만 남긴다")
+  void search_byKeyword() {
+    검색용_상품_저장();
+
+    assertThat(repository.search(cond("맥북", null, null, null)))
+        .extracting(Product::getTitle)
+        .containsExactlyInAnyOrder("맥북 프로 16", "맥북 에어");
+  }
+
+  @Test
+  @DisplayName("키워드가 빈 문자열이면 조건 없음으로 취급한다")
+  void search_blankKeywordIsNoCondition() {
+    // 검색창을 비우고 제출하면 null이 아니라 ""로 들어온다. 이걸 걸러내지 않으면 결과가 0건이 된다.
+    검색용_상품_저장();
+
+    assertThat(repository.search(cond("", null, null, null))).hasSize(3);
+  }
+
+  @Test
+  @DisplayName("키워드는 대소문자를 가리지 않는다")
+  void search_keywordIgnoresCase() {
+    repository.save(new Product("userA", "MacBook Air", "설명입니다", 1_000_000, ProductGrade.A));
+
+    assertThat(repository.search(cond("macbook", null, null, null))).hasSize(1);
+  }
+
+  @Test
+  @DisplayName("최소 가격은 그 값 이상만 남긴다 (경계 포함)")
+  void search_byMinPrice() {
+    검색용_상품_저장();
+
+    assertThat(repository.search(cond(null, 1_000_000, null, null)))
+        .extracting(Product::getPrice)
+        .containsExactlyInAnyOrder(2_000_000, 1_000_000);
+  }
+
+  @Test
+  @DisplayName("최대 가격은 그 값 이하만 남긴다 (경계 포함)")
+  void search_byMaxPrice() {
+    검색용_상품_저장();
+
+    assertThat(repository.search(cond(null, null, 1_000_000, null)))
+        .extracting(Product::getPrice)
+        .containsExactlyInAnyOrder(1_000_000, 500_000);
+  }
+
+  @Test
+  @DisplayName("등급은 정확히 일치하는 상품만 남긴다")
+  void search_byGrade() {
+    검색용_상품_저장();
+
+    assertThat(repository.search(cond(null, null, null, ProductGrade.S)))
+        .extracting(Product::getTitle)
+        .containsExactly("맥북 프로 16");
+  }
+
+  @Test
+  @DisplayName("조건을 여러 개 주면 모두 만족하는 상품만 남는다")
+  void search_combinedConditions() {
+    검색용_상품_저장();
+
+    // "맥북"이면서 150만원 이하 → 맥북 에어만
+    assertThat(repository.search(cond("맥북", null, 1_500_000, null)))
+        .extracting(Product::getTitle)
+        .containsExactly("맥북 에어");
+  }
+
+  @Test
+  @DisplayName("조건에 맞는 상품이 없으면 빈 리스트를 반환한다")
+  void search_noMatch() {
+    검색용_상품_저장();
+
+    assertThat(repository.search(cond("존재하지않는상품", null, null, null))).isEmpty();
+  }
 }

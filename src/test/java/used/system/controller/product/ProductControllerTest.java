@@ -24,6 +24,7 @@ import org.springframework.validation.BindingResult;
 import used.system.member.Member;
 import used.system.product.Product;
 import used.system.product.ProductGrade;
+import used.system.product.ProductSearchCond;
 import used.system.product.ProductService;
 import used.system.product.ProductUpdateDto;
 
@@ -68,12 +69,36 @@ class ProductControllerTest {
   void list() {
     Model model = new ConcurrentModel();
     List<Product> products = List.of(new Product("userA", "상품", "설명입니다", 10000, ProductGrade.A));
-    given(productService.findAll()).willReturn(products);
+    ProductSearchCond cond = new ProductSearchCond();
+    given(productService.search(cond)).willReturn(products);
 
-    String view = productController.list(model);
+    String view = productController.list(cond, model);
 
     assertThat(view).isEqualTo("product/list");
     assertThat(model.getAttribute("products")).isEqualTo(products);
+  }
+
+  @Test
+  @DisplayName("검색 조건은 그대로 서비스에 전달된다")
+  void list_passesSearchCond() {
+    Model model = new ConcurrentModel();
+    ProductSearchCond cond = new ProductSearchCond();
+    cond.setKeyword("맥북");
+    cond.setMinPrice(10000);
+    cond.setMaxPrice(50000);
+    cond.setGrade(ProductGrade.S);
+    given(productService.search(cond)).willReturn(List.of());
+
+    productController.list(cond, model);
+
+    // 컨트롤러는 조건을 해석하지 않는다. 바인딩된 그대로 넘기는 것이 이 계층의 책임이다.
+    ArgumentCaptor<ProductSearchCond> captor = ArgumentCaptor.forClass(ProductSearchCond.class);
+    verify(productService).search(captor.capture());
+    ProductSearchCond passed = captor.getValue();
+    assertThat(passed.getKeyword()).isEqualTo("맥북");
+    assertThat(passed.getMinPrice()).isEqualTo(10000);
+    assertThat(passed.getMaxPrice()).isEqualTo(50000);
+    assertThat(passed.getGrade()).isEqualTo(ProductGrade.S);
   }
 
   @Test

@@ -2,7 +2,7 @@
 
 중고나라/당근마켓의 축소판을 직접 만들며 **Spring MVC 웹 애플리케이션의 구조를 체화**하기 위한 학습 프로젝트입니다.
 
-단순 CRUD 게시판이 아니라 회원/세션 로그인, 상품, 권한 검증, 검증(Validation), 예외 처리, 검색·필터, (예정) 찜·REST API까지 —
+단순 CRUD 게시판이 아니라 회원/세션 로그인, 상품, 권한 검증, 검증(Validation), 예외 처리, 검색·필터, 찜, (예정) 문의·REST API까지 —
 스프링 기본편 · MVC · HTTP 강의에서 배운 내용을 실제 구조로 엮는 것이 목표입니다.
 
 > 완성도 높은 서비스가 아니라 **계층형 아키텍처와 HTTP 요청/응답 설계를 몸으로 이해하는 것**이 이 프로젝트의 존재 이유입니다.
@@ -57,7 +57,7 @@ Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계
 
 - [x] 로그인 체크 인터셉터 (`LoginCheckInterceptor` + `WebConfig` — 컨트롤러마다 반복되던 세션 체크를 하나로 통합)
 - [x] 검색 / 필터 (`/products?keyword=&minPrice=&maxPrice=&grade=` — 조건별 독립 적용, 빈 조건은 전체 조회)
-- [ ] 찜 기능 (중복 찜 방지 · 본인 상품 찜 불가)
+- [x] 찜 기능 (하트 토글, 내가 찜한 상품 목록 · 중복 찜 방지 · 삭제된 상품 자동 제외)
 - [ ] 상품 문의 / 판매자 답변 (작성자·판매자 권한 체크)
 
 ### Level 3 — REST API + 예외 응답 (예정)
@@ -98,16 +98,19 @@ HTML Form은 GET/POST만 지원하므로 삭제·수정도 POST로 처리하고,
 | 상품 등록 | `/products/new` → `/products` | GET → POST |
 | 상품 수정 | `/products/{id}/edit` | GET → POST |
 | 상품 삭제 | `/products/{id}/delete` | POST |
+| 찜하기 / 찜 취소 | `/products/{id}/likes` / `/products/{id}/likes/delete` | POST / POST |
 | 마이페이지 | `/my-page` | GET |
 | 내가 등록한 상품 | `/my-page/products` | GET |
-| 내가 찜한 상품 (예정) | `/my-page/likes` | GET |
+| 내가 찜한 상품 | `/my-page/likes` | GET |
+
+찜을 토글 하나로 두지 않고 추가·취소로 나눈 이유는 아래 설계 원칙 7번 참고.
 
 ### API (예정)
 
 | 기능 | URL | 메서드 |
 |---|---|---|
 | 찜하기 / 찜 취소 | `/api/products/{id}/likes` | POST / DELETE |
-| 상품 검색 | `/api/products/search?keyword=&status=` | GET |
+| 상품 검색 | `/api/products/search?keyword=&grade=` | GET |
 
 ---
 
@@ -121,11 +124,13 @@ used.system
  │    └── LoginCheckInterceptor   # 세션 미인증 요청을 컨트롤러 진입 전에 차단
  ├── controller
  │    ├── home        # 웰컴 페이지
+ │    ├── like        # 찜하기 / 찜 취소
  │    ├── member      # 회원가입, 로그인/로그아웃, SessionConst, Form 객체
- │    ├── myPage      # 마이페이지, 내가 등록한 상품
- │    └── product     # 상품 등록/목록/상세/수정, Form 객체
+ │    ├── myPage      # 마이페이지, 내가 등록한 상품, 내가 찜한 상품
+ │    └── product     # 상품 등록/목록/상세/수정, Form 객체, 검색 조건
+ ├── like             # Like 도메인, Service, Repository(Memory)
  ├── member           # Member 도메인, Service, Repository(Memory)
- ├── product          # Product 도메인, ProductGrade, Service, Repository(Memory), UpdateDto
+ ├── product          # Product 도메인, ProductGrade, Service, Repository(Memory), UpdateDto, SearchCond
  └── exception        # 커스텀 예외 + GlobalExceptionHandler(@ControllerAdvice)
 ```
 
@@ -186,6 +191,28 @@ controller → service → repository
 
 - 무분별한 setter를 열어두지 않는다 — 상태 변경은 의미 있는 메서드(`product.update(...)`)로만.
 - 수정 시각(`updatedAt`) 갱신처럼 상태 변경에 따라오는 규칙은 도메인 메서드 안에서 자동 처리.
+
+### 7. 같은 요청이 두 번 와도 결과가 같아야 한다 (멱등성)
+
+- 하트 연타, 새로고침, 네트워크 재시도로 **같은 요청이 중복 도착하는 것은 정상**이다.
+- 그래서 찜을 **토글 하나로 만들지 않는다.** 토글은 두 번 보내면 결과가 뒤집힌다.
+  추가(`/likes`)와 취소(`/likes/delete`)로 나누고, 어느 폼을 그릴지는 화면이 현재 상태를 보고 정한다.
+  사용자에게는 여전히 하트 하나를 누르는 것으로 보인다.
+- 이미 찜한 상품을 다시 찜하거나, 찜하지 않은 것을 취소해도 **예외 대신 통과**시킨다.
+  이미 원하는 상태인데 에러 화면을 띄울 이유가 없다. 중복 저장이 막히는 것은 그대로다.
+
+### 8. 목록 화면에서 항목마다 조회하지 않는다
+
+- "이 상품을 내가 찜했나"를 상품마다 물으면 목록 길이만큼 질의가 늘어난다(N+1).
+- 대신 **내 찜 id 전체를 `Set`으로 한 번 받아**, 화면은 `contains`만 확인한다.
+- 비로그인에는 `null`이 아니라 **빈 `Set`**을 넘긴다 — `null`이면 템플릿의 `contains` 호출이 터진다.
+  "없음"은 언제나 빈 컬렉션으로 표현한다(리포지토리 반환값도 동일).
+
+### 9. 클라이언트가 보낸 값으로 이동하지 않는다
+
+- 찜 후 원래 화면으로 되돌릴 때 `Referer` 헤더를 쓰되, **경로와 쿼리만 떼어 쓰고 호스트는 버린다.**
+- 값을 그대로 `redirect:`에 넣으면 외부 주소로 사용자를 튕겨 보낼 수 있다(**오픈 리다이렉트**).
+  헤더는 조작 가능한 입력이므로 신뢰하지 않는다 — 원칙 5의 "클라이언트를 믿지 않는다"와 같은 이유.
 
 ---
 

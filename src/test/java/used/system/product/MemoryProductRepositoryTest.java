@@ -126,12 +126,15 @@ class MemoryProductRepositoryTest {
   }
 
   @Test
-  @DisplayName("키워드가 빈 문자열이면 조건 없음으로 취급한다")
+  @DisplayName("키워드가 비어 있거나 공백뿐이면 조건 없음으로 취급한다")
   void search_blankKeywordIsNoCondition() {
-    // 검색창을 비우고 제출하면 null이 아니라 ""로 들어온다. 이걸 걸러내지 않으면 결과가 0건이 된다.
+    // 검색창을 비우고 제출하면 null이 아니라 ""로 들어온다.
     검색용_상품_저장();
 
+    // ""는 contains("")가 항상 true라 구현과 무관하게 통과한다. 규칙을 적어두는 의미는 있지만
+    // 회귀를 잡지는 못한다. 공백만 있는 키워드라야 isBlank() 처리가 실제로 있는지 갈린다.
     assertThat(repository.search(cond("", null, null, null))).hasSize(3);
+    assertThat(repository.search(cond("   ", null, null, null))).hasSize(3);
   }
 
   @Test

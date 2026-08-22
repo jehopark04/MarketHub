@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,7 @@ import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import used.system.like.LikeService;
 import used.system.member.Member;
 import used.system.product.Product;
 import used.system.product.ProductGrade;
@@ -39,6 +41,8 @@ import used.system.product.ProductUpdateDto;
 class ProductControllerTest {
 
   @Mock private ProductService productService;
+
+  @Mock private LikeService likeService;
 
   @InjectMocks private ProductController productController;
 
@@ -77,10 +81,38 @@ class ProductControllerTest {
     ProductSearchCond cond = new ProductSearchCond();
     given(productService.search(cond)).willReturn(products);
 
-    String view = productController.list(cond, bindingResultFor(cond), model);
+    String view = productController.list(cond, bindingResultFor(cond), null, model);
 
     assertThat(view).isEqualTo("product/list");
     assertThat(model.getAttribute("products")).isEqualTo(products);
+  }
+
+  @Test
+  @DisplayName("비로그인 목록은 찜 목록을 조회하지 않고 빈 집합을 담는다")
+  void list_notLoggedIn_hasNoLikes() {
+    Model model = new ConcurrentModel();
+    ProductSearchCond cond = new ProductSearchCond();
+    given(productService.search(cond)).willReturn(List.of());
+
+    productController.list(cond, bindingResultFor(cond), null, model);
+
+    // 빈 집합이어야 화면이 전부 빈 하트를 그린다. null이면 템플릿에서 contains 호출이 터진다.
+    assertThat((Set<?>) model.getAttribute("likedProductIds")).isEmpty();
+    verify(likeService, never()).findLikedProductIds(anyString());
+  }
+
+  @Test
+  @DisplayName("로그인 목록은 내가 찜한 상품 id들을 모델에 담는다")
+  void list_loggedIn_hasLikedIds() {
+    Model model = new ConcurrentModel();
+    ProductSearchCond cond = new ProductSearchCond();
+    given(productService.search(cond)).willReturn(List.of());
+    given(likeService.findLikedProductIds("userA")).willReturn(Set.of(1L, 3L));
+
+    productController.list(cond, bindingResultFor(cond), loginMember, model);
+
+    // Set 비교는 순서를 따지지 않는다
+    assertThat(model.getAttribute("likedProductIds")).isEqualTo(Set.of(1L, 3L));
   }
 
   @Test
@@ -94,7 +126,7 @@ class ProductControllerTest {
     cond.setGrade(ProductGrade.S);
     given(productService.search(cond)).willReturn(List.of());
 
-    productController.list(cond, bindingResultFor(cond), model);
+    productController.list(cond, bindingResultFor(cond), null, model);
 
     // 컨트롤러는 조건을 해석하지 않는다. 바인딩된 그대로 넘기는 것이 이 계층의 책임이다.
     ArgumentCaptor<ProductSearchCond> captor = ArgumentCaptor.forClass(ProductSearchCond.class);

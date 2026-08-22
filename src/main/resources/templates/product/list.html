@@ -17,6 +17,10 @@
         .search-bar { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; }
         .search-bar label { display: block; font-size: 0.85em; color: #666; margin-bottom: 4px; }
         .search-bar input, .search-bar select { padding: 8px; box-sizing: border-box; }
+        .like-form { margin: 0; }
+        .like-btn { border: none; background: none; cursor: pointer; font-size: 1.3em; line-height: 1; padding: 0; }
+        .like-btn.on { color: #e0245e; }
+        .like-btn.off { color: #bbb; }
     </style>
 </head>
 <body>
@@ -52,6 +56,7 @@
 <table>
     <thead>
     <tr>
+        <th>찜</th>
         <th>제목</th>
         <th>가격</th>
         <th>등급</th>
@@ -60,6 +65,19 @@
     </thead>
     <tbody>
     <tr th:each="product : ${products}">
+        <td>
+            <!-- 찜 상태에 따라 다른 폼을 그린다. 사용자에게는 하트 하나를 누르는 것으로 보이지만
+                 요청은 "추가"와 "취소"로 나뉘어 있어, 같은 요청을 두 번 보내도 결과가 뒤집히지 않는다.
+                 비로그인도 하트가 보이며, 누르면 인터셉터가 로그인 화면으로 보낸다. -->
+            <form class="like-form" th:if="${!likedProductIds.contains(product.id)}"
+                  th:action="@{/products/{id}/likes(id=${product.id})}" method="post">
+                <button class="like-btn off" type="submit" title="찜하기">&#9825;</button>
+            </form>
+            <form class="like-form" th:if="${likedProductIds.contains(product.id)}"
+                  th:action="@{/products/{id}/likes/delete(id=${product.id})}" method="post">
+                <button class="like-btn on" type="submit" title="찜 취소">&#9829;</button>
+            </form>
+        </td>
         <td>
             <a th:href="@{/products/{id}(id=${product.id})}" th:text="${product.title}">상품 제목</a>
         </td>

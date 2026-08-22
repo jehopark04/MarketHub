@@ -1,5 +1,6 @@
 package used.system.product;
 
+import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,11 @@ public class ProductServiceImpl implements ProductService {
   @Override
   public List<Product> search(ProductSearchCond cond) {
     return productRepository.search(cond);
+  }
+
+  @Override
+  public List<Product> findAllByIds(Collection<Long> ids) {
+    return productRepository.findAllByIds(ids);
   }
 
   @Override

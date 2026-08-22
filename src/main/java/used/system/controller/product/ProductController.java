@@ -1,6 +1,7 @@
 package used.system.controller.product;
 
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -8,6 +9,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import used.system.controller.member.SessionConst;
+import used.system.like.LikeService;
 import used.system.member.Member;
 import used.system.product.*;
 
@@ -16,6 +18,7 @@ import used.system.product.*;
 public class ProductController {
 
   private final ProductService productService;
+  private final LikeService likeService;
 
   /**
    * BindingResult를 받아두기만 하고 검사하지 않는 것은 의도다. 등록·수정과 달리 조회는 잘못된 조건에 실패로 답하면 안 된다 — 주소창을 직접 고쳤거나 오래된
@@ -28,9 +31,18 @@ public class ProductController {
   public String list(
       @ModelAttribute("productSearchCond") ProductSearchCond cond,
       BindingResult bindingResult,
+      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member loginMember,
       Model model) {
     List<Product> products = productService.search(cond);
     model.addAttribute("products", products);
+
+    // 상품마다 "내가 찜했나"를 묻지 않고 내 찜 목록을 한 번에 받아둔다. 화면은 이 집합에
+    // 들어 있는지만 보고 하트를 채운다. 비로그인은 빈 집합이라 전부 빈 하트가 된다.
+    model.addAttribute(
+        "likedProductIds",
+        loginMember == null
+            ? Set.<Long>of()
+            : likeService.findLikedProductIds(loginMember.getLoginId()));
     return "product/list";
   }
 

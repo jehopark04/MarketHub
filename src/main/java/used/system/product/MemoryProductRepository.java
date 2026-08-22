@@ -58,6 +58,15 @@ public class MemoryProductRepository implements ProductRepository {
     return product.getTitle().toLowerCase().contains(keyword.toLowerCase());
   }
 
+  /** 넘겨받은 id 순서를 그대로 유지한다. 찜 목록이 찜한 순서로 보이려면 이 순서가 뒤집히면 안 된다. */
+  @Override
+  public List<Product> findAllByIds(Collection<Long> ids) {
+    return ids.stream()
+        .map(productMap::get)
+        .filter(Objects::nonNull) // 그 사이 삭제된 상품은 제외한다
+        .collect(Collectors.toList());
+  }
+
   @Override
   public void delete(Long id) {
     productMap.remove(id);

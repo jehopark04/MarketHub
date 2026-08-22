@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import used.system.controller.member.SessionConst;
+import used.system.like.LikeService;
 import used.system.member.Member;
 import used.system.product.Product;
 import used.system.product.ProductService;
@@ -16,6 +17,7 @@ import used.system.product.ProductService;
 public class MyPageController {
 
   private final ProductService productService;
+  private final LikeService likeService;
 
   @GetMapping("/my-page")
   public String myPageForm(
@@ -32,5 +34,15 @@ public class MyPageController {
 
     model.addAttribute("products", products);
     return "member/myProducts";
+  }
+
+  @GetMapping("/my-page/likes")
+  public String myLikes(
+      Model model, @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member member) {
+
+    List<Product> products = likeService.findLikedProducts(member.getLoginId());
+
+    model.addAttribute("products", products);
+    return "member/myLikes";
   }
 }

@@ -36,8 +36,11 @@ class WebConfigTest {
     "GET /products/5/edit",
     "POST /products/5/edit",
     "POST /products/5/delete",
+    "POST /products/5/likes",
+    "POST /products/5/likes/delete",
     "GET /my-page",
     "GET /my-page/products",
+    "GET /my-page/likes",
   };
 
   /** 로그인 없이 열려야 하는 요청. */

@@ -27,6 +27,8 @@ public class WebConfig implements WebMvcConfigurer {
             "/members", // 회원가입 제출(POST)
             "/products", // 상품 목록(GET). 등록(POST)은 아래에서 따로 막는다
             "/products/{productId:[0-9]+}", // 상품 상세(GET). 숫자로 제한해야 /products/new가 여기 걸리지 않는다
+            // API는 아래 전용 인터셉터가 맡는다. 여기 걸리면 API 요청에 302 + 로그인 HTML이 나간다
+            "/api/**",
             "/css/**",
             "/*.ico",
             "/error");
@@ -34,5 +36,9 @@ public class WebConfig implements WebMvcConfigurer {
     // /products는 목록 조회(GET)와 상품 등록(POST)이 같은 경로다. 경로 패턴만으로는 둘을 가를 수 없어
     // 위에서 통째로 열어뒀으니, 등록 쪽만 메서드로 집어서 다시 막는다.
     registry.addInterceptor(new LoginCheckInterceptor("POST")).addPathPatterns("/products");
+
+    // 판단은 위와 같고 거절하는 방법만 다르다 - 리다이렉트가 아니라 401.
+    // 화면과 달리 API는 전부 로그인이 필요하므로 여는 경로가 없다.
+    registry.addInterceptor(new ApiLoginCheckInterceptor()).addPathPatterns("/api/**");
   }
 }

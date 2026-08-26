@@ -29,50 +29,24 @@ class WebConfigTest {
   private final Member loginMember = new Member("userA", "에이", "password1");
   private final Object handler = new Object();
 
-  /** 로그인이 필요한 요청. "메서드 경로" 형태. */
-  private static final String[] 보호_대상 = {
-    "GET /products/new",
-    "POST /products",
-    "GET /products/5/edit",
-    "POST /products/5/edit",
-    "POST /products/5/delete",
-    "POST /products/5/likes",
-    "POST /products/5/likes/delete",
-    "GET /my-page",
-    "GET /my-page/products",
-    "GET /my-page/likes",
-  };
-
-  /** 로그인 없이 열려야 하는 요청. */
-  private static final String[] 공개_대상 = {
-    "GET /",
-    "GET /login",
-    "POST /login",
-    "POST /logout",
-    "GET /members/new",
-    "POST /members",
-    "GET /products",
-    "GET /products/5",
-  };
-
   /**
-   * 로그인이 필요한 API 요청. 화면과 달리 거절 방식이 401이라 목록을 따로 둔다.
+   * 로그인이 필요한 요청. "메서드 경로" 형태.
    *
    * <p>상품 쓰기 셋이 특히 중요하다. 같은 경로의 조회를 열어둔 상태라, 메서드 가드가 빠지면 비로그인이 남의 상품을 등록·수정·삭제할 수 있게 된다.
    */
-  private static final String[] API_보호_대상 = {
+  private static final String[] 보호_대상 = {
+    "POST /api/products",
+    "PUT /api/products/5",
+    "DELETE /api/products/5",
     "PUT /api/me/likes/5",
     "DELETE /api/me/likes/5",
     "GET /api/me/likes",
     "GET /api/me",
     "GET /api/me/products",
-    "POST /api/products",
-    "PUT /api/products/5",
-    "DELETE /api/products/5",
   };
 
-  /** 로그인 없이 열려야 하는 API 요청. 같은 내용의 화면이 이미 공개라 정책을 맞춘 것들이다. */
-  private static final String[] API_공개_대상 = {
+  /** 로그인 없이 열려야 하는 요청. */
+  private static final String[] 공개_대상 = {
     "GET /api/products",
     "GET /api/products/5",
     "POST /api/members",
@@ -99,8 +73,6 @@ class WebConfigTest {
   /**
    * DispatcherServlet이 하는 일을 축약한다 — 경로가 맞는 인터셉터만 골라 preHandle을 순서대로 돌리고, 하나라도 false를 반환하면 요청이 끊긴
    * 것이다.
-   *
-   * <p>거절하는 방법은 화면과 API가 다르다(302 vs 401). 그래서 판정은 여기서 하지 않고 응답을 그대로 돌려준다.
    */
   private Chain run(String method, String path, MockHttpSession session) throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest(method, path);
@@ -124,24 +96,7 @@ class WebConfigTest {
     return new Chain(true, response);
   }
 
-  /**
-   * 화면 요청용.
-   *
-   * @return 컨트롤러까지 도달하면 true
-   */
-  private boolean reachesController(String method, String path, MockHttpSession session)
-      throws Exception {
-    Chain chain = run(method, path, session);
-    if (!chain.reached()) {
-      // 끊었다면 로그인 페이지로 보냈어야 한다. 엉뚱한 곳으로 갔다면 그것도 결함이다.
-      assertThat(chain.response().getRedirectedUrl())
-          .as("%s %s 를 차단했다면 /login으로 보내야 한다", method, path)
-          .isEqualTo("/login");
-    }
-    return chain.reached();
-  }
-
-  /** 로그인 성공했을때 서버에 남는 상태를 그대로 재현한 것. 실제 memberController의 로그인 처리가 하는 일임 */
+  /** 로그인 성공했을때 서버에 남는 상태를 그대로 재현한 것. 실제 로그인 처리가 하는 일임 */
   private MockHttpSession loggedInSession() {
     MockHttpSession session = new MockHttpSession();
     session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);
@@ -156,7 +111,7 @@ class WebConfigTest {
             String[] parts = each.split(" ");
             try {
               softly
-                  .assertThat(reachesController(parts[0], parts[1], session))
+                  .assertThat(run(parts[0], parts[1], session).reached())
                   .as("%s — 컨트롤러 도달 여부", each)
                   .isEqualTo(도달해야_하는가);
             } catch (Exception e) {
@@ -167,9 +122,26 @@ class WebConfigTest {
   }
 
   @Test
-  @DisplayName("보호 경로는 비로그인 요청을 컨트롤러에 닿기 전에 끊는다")
-  void 보호_경로는_비로그인을_막는다() {
-    전부(보호_대상, null, false);
+  @DisplayName("보호 경로는 비로그인을 401로 끊는다 - 리다이렉트가 아니다")
+  void 보호_경로는_비로그인을_401로_막는다() {
+    SoftAssertions.assertSoftly(
+        softly -> {
+          for (String each : 보호_대상) {
+            String[] parts = each.split(" ");
+            try {
+              Chain chain = run(parts[0], parts[1], null);
+              softly.assertThat(chain.reached()).as("%s — 컨트롤러 도달 여부", each).isFalse();
+              softly.assertThat(chain.response().getStatus()).as("%s — 상태 코드", each).isEqualTo(401);
+              // 302로 로그인 페이지에 보내면 클라이언트는 실패를 200 HTML로 받는다.
+              softly
+                  .assertThat(chain.response().getRedirectedUrl())
+                  .as("%s — 리다이렉트가 없어야 한다", each)
+                  .isNull();
+            } catch (Exception e) {
+              softly.fail("%s 검사 중 예외: %s", each, e);
+            }
+          }
+        });
   }
 
   @Test
@@ -185,70 +157,10 @@ class WebConfigTest {
   }
 
   @Test
-  @DisplayName("상품 상세는 열려 있지만 등록 폼은 막힌다 - 숫자 제약이 둘을 가른다")
-  void 숫자_제약이_상세와_등록폼을_가른다() throws Exception {
-    // /products/{productId:[0-9]+}를 /products/*로 "단순화"하면 등록 폼이 조용히 공개된다.
-    // 화면상 아무 이상이 없어 손으로는 발견되지 않는 종류의 사고라 여기서 고정한다.
-    assertThat(reachesController("GET", "/products/5", null)).isTrue();
-    assertThat(reachesController("GET", "/products/new", null)).isFalse();
-  }
-
-  @Test
-  @DisplayName("같은 /products라도 목록 조회는 열리고 상품 등록은 막힌다")
-  void 메서드가_products를_가른다() throws Exception {
-    // 경로 패턴은 HTTP 메서드를 구분하지 못한다. 등록을 둘로 나눠 가른 부분이라 함께 고정한다.
-    assertThat(reachesController("GET", "/products", null)).isTrue();
-    assertThat(reachesController("POST", "/products", null)).isFalse();
-  }
-
-  @Test
-  @DisplayName("API 보호 경로는 비로그인을 401로 끊는다 - 리다이렉트가 아니다")
-  void API는_401로_끊는다() {
-    SoftAssertions.assertSoftly(
-        softly -> {
-          for (String each : API_보호_대상) {
-            String[] parts = each.split(" ");
-            try {
-              Chain chain = run(parts[0], parts[1], null);
-              softly.assertThat(chain.reached()).as("%s — 컨트롤러 도달 여부", each).isFalse();
-              softly.assertThat(chain.response().getStatus()).as("%s — 상태 코드", each).isEqualTo(401);
-              // /api/**를 화면용 인터셉터에서 빼지 않으면 여기가 "/login"이 된다.
-              // 클라이언트는 실패를 200 HTML로 받게 되므로 그 회귀를 여기서 잡는다.
-              softly
-                  .assertThat(chain.response().getRedirectedUrl())
-                  .as("%s — 리다이렉트가 없어야 한다", each)
-                  .isNull();
-            } catch (Exception e) {
-              softly.fail("%s 검사 중 예외: %s", each, e);
-            }
-          }
-        });
-  }
-
-  @Test
-  @DisplayName("공개 API는 비로그인도 컨트롤러까지 통과시킨다")
-  void 공개_API는_비로그인도_통과시킨다() {
-    // excludePathPatterns를 지우면 여기가 깨진다. 화면은 열려 있는데 API만 401을 주는 상태는
-    // 브라우저로 목록을 열어보는 것만으로는 드러나지 않아, 배선을 여기서 고정한다.
-    SoftAssertions.assertSoftly(
-        softly -> {
-          for (String each : API_공개_대상) {
-            String[] parts = each.split(" ");
-            try {
-              Chain chain = run(parts[0], parts[1], null);
-              softly.assertThat(chain.reached()).as("%s — 컨트롤러 도달 여부", each).isTrue();
-            } catch (Exception e) {
-              softly.fail("%s 검사 중 예외: %s", each, e);
-            }
-          }
-        });
-  }
-
-  @Test
-  @DisplayName("같은 /api/products라도 조회는 열리고 등록은 막힌다")
-  void 메서드가_상품_API를_가른다() throws Exception {
+  @DisplayName("같은 /api/products라도 조회는 열리고 쓰기는 막힌다")
+  void 메서드가_상품_경로를_가른다() throws Exception {
     // 조회를 열려고 excludePathPatterns에 넣은 경로다. 메서드 가드를 지우면 이 경로의 POST·PUT·DELETE가
-    // 통째로 무인증으로 열리는데, 브라우저로 목록을 열어보는 것만으로는 전혀 드러나지 않는다.
+    // 통째로 무인증으로 열리는데, 목록을 열어보는 것만으로는 전혀 드러나지 않는다.
     assertThat(run("GET", "/api/products", null).reached()).isTrue();
     assertThat(run("POST", "/api/products", null).reached()).isFalse();
 
@@ -258,29 +170,10 @@ class WebConfigTest {
   }
 
   @Test
-  @DisplayName("상품 조회 API는 열려 있지만 찜 API는 막힌다")
-  void 공개_API가_찜_API까지_열지_않는다() throws Exception {
-    // /api/**를 통째로 열거나 패턴을 /api/products/**로 넓히면 조용히 함께 열릴 수 있는 부분이다.
+  @DisplayName("상품 조회를 열어도 찜 API까지 열리지는 않는다")
+  void 공개_경로가_찜_API까지_열지_않는다() throws Exception {
+    // 패턴을 /api/products/**로 넓히거나 /api/**를 통째로 열면 조용히 함께 열릴 수 있는 부분이다.
     assertThat(run("GET", "/api/products/5", null).reached()).isTrue();
     assertThat(run("GET", "/api/me/likes", null).reached()).isFalse();
-  }
-
-  @Test
-  @DisplayName("로그인 상태면 API 보호 경로도 전부 통과한다")
-  void 로그인하면_API도_통과한다() {
-    SoftAssertions.assertSoftly(
-        softly -> {
-          for (String each : API_보호_대상) {
-            String[] parts = each.split(" ");
-            try {
-              softly
-                  .assertThat(run(parts[0], parts[1], loggedInSession()).reached())
-                  .as("%s — 컨트롤러 도달 여부", each)
-                  .isTrue();
-            } catch (Exception e) {
-              softly.fail("%s 검사 중 예외: %s", each, e);
-            }
-          }
-        });
   }
 }

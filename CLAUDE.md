@@ -1,14 +1,17 @@
 # system
 
-중고거래 웹 애플리케이션. Spring Boot + Thymeleaf 서버사이드 렌더링(SSR). 학습용 프로젝트.
+중고거래 웹 애플리케이션. Spring Boot 기반 **JSON REST API**. 학습용 프로젝트.
+
+원래 Thymeleaf SSR이었고 같은 기능을 API로 옮긴 뒤 화면 계층을 걷어냈다.
+프론트는 아직 없다 — `src/main/resources/static/`에 두면 스프링이 그대로 서빙한다.
 
 ## 스택
-Spring Boot 4 / Java 21 / Gradle / Thymeleaf + Spring WebMVC / Lombok
+Spring Boot 4 / Java 21 / Gradle / Spring WebMVC / Lombok
 
 - 테스트 `./gradlew test` · 포맷 `./gradlew spotlessApply`
   (Spotless: googleJavaFormat + removeUnusedImports)
 - ⚠️ Boot **4**라 starter 이름이 3.x와 다르다 — `spring-boot-starter-webmvc`,
-  `-webmvc-test`, `-thymeleaf-test`. `spring-boot-starter-web` / `spring-boot-starter-test`가 아니다.
+  `-webmvc-test`. `spring-boot-starter-web` / `spring-boot-starter-test`가 아니다.
 
 ## 구조 규칙
 `used.system` 아래 배치는 다음과 같다. **새 파일을 만들 때 이 자리를 지킨다.**
@@ -16,8 +19,8 @@ Spring Boot 4 / Java 21 / Gradle / Thymeleaf + Spring WebMVC / Lombok
 | 대상 | 위치 | 예 |
 |---|---|---|
 | 도메인 객체·Service·ServiceImpl·Repository·MemoryRepository | `used.system.<도메인>` — 한 패키지에 함께 산다 | `used.system.product.ProductServiceImpl` |
-| Controller·Form·세션 상수 | `used.system.controller.<도메인>` | `used.system.controller.product.ProductForm` |
-| 커스텀 예외·`GlobalExceptionHandler` | `used.system.exception` | `used.system.exception.ProductNotFoundException` |
+| Controller·요청/응답 DTO·세션 상수 | `used.system.controller.<도메인>` | `used.system.controller.product.ProductCreateRequest` |
+| 커스텀 예외·`ApiExceptionHandler` | `used.system.exception` | `used.system.exception.ProductNotFoundException` |
 
 즉 **서비스·리포지토리 계층은 도메인으로 나누고, 웹 계층과 예외는 계층으로 모은다.**
 컨트롤러를 도메인 패키지(`used.system.product`)에 두지 않는다.
@@ -27,24 +30,38 @@ Spring Boot 4 / Java 21 / Gradle / Thymeleaf + Spring WebMVC / Lombok
 - Service·Repository는 **인터페이스 + 구현 쌍**으로 둔다. **구현이 하나뿐이어도 인터페이스를
   제거하지 않는다** — 구현 교체 지점이고, 테스트가 인터페이스에 의존해야 갈아끼울 수 있다.
   YAGNI로 판단하지 않는다.
-- 비즈니스 규칙(소유권·존재 검증)은 **Service**. Controller는 세션 확인·바인딩·뷰 반환만.
+- 비즈니스 규칙(소유권·존재 검증)은 **Service**. Controller는 세션 확인·바인딩·응답 변환만.
+- 요청/응답 DTO는 `record`. 이름은 `~Request` / `~Response`로 역할을 드러낸다.
+  도메인 객체를 그대로 응답에 싣지 않는다 — `Member`를 반환하면 비밀번호가 나간다.
 
 ## 도메인 객체
 - 상태 변경은 의미 있는 메서드로(`product.update(...)`). setter 남발 금지.
 - `setId`만 예외 — 리포지토리가 `save()` 시점에 채번해 부여하는 통로. 의도된 설계다.
 - 생성 시 `createAt`, 변경 시 `updatedAt` 갱신.
 
-## 예외 · 뷰
+## 예외 · 응답
 - 도메인별 커스텀 예외(`RuntimeException` 상속).
-- 예외 → HTTP 상태·에러 뷰 매핑은 `GlobalExceptionHandler`(`@ControllerAdvice`)에 **집중**한다.
-  컨트롤러에서 try-catch로 흩뿌리지 않는다.
-- 에러 뷰는 `error/` 하위 템플릿, `model`에 `message` 전달.
+- 예외 → HTTP 상태 매핑은 `ApiExceptionHandler`(`@RestControllerAdvice`)에 **집중**한다.
+  컨트롤러에서 try-catch로 흩뿌리지 않는다. **새 커스텀 예외를 만들면 여기 항목을 더한다.**
+- 에러 응답 본문은 스프링 내장 `ProblemDetail`(RFC 9457). 에러 DTO를 직접 만들지 않는다.
+- 성공 응답: 상태 코드가 늘 같으면 DTO를 그대로 반환하고, 상태 코드나 헤더를
+  메서드가 정해야 할 때만 `ResponseEntity`로 감싼다.
 
-## 인증 · 폼
-- 세션 키는 `used.system.controller.member.SessionConst`의 `LOGIN_MEMBER` 상수. 문자열 하드코딩 금지.
-- `@SessionAttribute(required = false)`로 꺼내고 `null`이면 `redirect:/login`.
-- 폼 객체에 Bean Validation, 컨트롤러에서 `@Validated` + `BindingResult`.
-  `hasErrors()`면 해당 폼 뷰로 되돌린다.
+## 인증 · 검증
+- 인증은 **세션**이다. 세션 키는 `used.system.controller.member.SessionConst`의
+  `LOGIN_MEMBER` 상수. 문자열 하드코딩 금지.
+- **로그인 검사는 컨트롤러에 두지 않는다.** `ApiLoginCheckInterceptor`가 컨트롤러에 닿기 전에
+  401로 끊는다. 어느 경로를 열지는 `WebConfig`가 정한다 — 전부 막고 열 곳만 뚫는다.
+  경로 패턴은 HTTP 메서드를 구분하지 못하므로, 조회만 연 경로는 쓰기를 메서드로 다시 막는다.
+- 세션 회원은 `@SessionAttribute(name = SessionConst.LOGIN_MEMBER)`로 받는다.
+  인터셉터가 이미 막았으니 `required = false`는 **비로그인도 허용하는 경로에서만** 쓴다.
+- 신원(판매자·소유자)은 **요청 본문이 아니라 세션에서** 정한다.
+  클라이언트가 보낸 값을 쓰면 남의 이름으로 등록된다.
+- 요청 DTO에 Bean Validation, 컨트롤러에서 `@Validated` + `@RequestBody`.
+  **`BindingResult`를 받지 않는다** — 받으면 검증 실패가 예외로 안 올라가 400이 나가지 않는다.
+  실패는 `MethodArgumentNotValidException` → `ApiExceptionHandler`가 필드별 메시지와 함께 400.
+- 예외: 검색 조건(`ProductSearchCond`)만 `BindingResult`를 받아 **일부러 삼킨다**.
+  조회는 잘못된 조건에 실패로 답하지 않는다 — 그 필드만 빠진 채 나머지로 검색된다.
 
 ## 테스트
 - 위치: `src/test/java/used/`, **소스와 동일 패키지 구조**. 컨트롤러 테스트도 마찬가지로
@@ -68,7 +85,7 @@ Spring Boot 4 / Java 21 / Gradle / Thymeleaf + Spring WebMVC / Lombok
 |---|---|
 | 인메모리 리포지토리 | 학습 단계의 의도. "DB를 써라" 제안 금지 |
 | `@SpringBootTest` 미사용 | 위 테스트 규약대로 의도적 |
-| SSR(Thymeleaf) | 의도된 선택. REST API 전환 제안 금지 |
+| 프론트 부재 | API만 있고 화면이 없는 상태가 지금의 의도다. "SSR로 되돌려라" 금지 |
 | `setId` | 리포지토리 채번 통로. "setter 하나뿐이라 일관성 없다"·"캡슐화 위반" 금지 |
 | 동시성·스레드 안전성 | 단일 사용자 학습 전제로 프로젝트 범위 밖. `HashMap`·`++sequence`를 스레드 안전성 문제로 올리지 않는다 |
 

@@ -1,9 +1,12 @@
 # MarketHub — 미니 중고거래 플랫폼
 
-중고나라/당근마켓의 축소판을 직접 만들며 **Spring MVC 웹 애플리케이션의 구조를 체화**하기 위한 학습 프로젝트입니다.
+중고나라/당근마켓의 축소판을 직접 만들며 **Spring 웹 애플리케이션의 구조를 체화**하기 위한 학습 프로젝트입니다.
 
-단순 CRUD 게시판이 아니라 회원/세션 로그인, 상품, 권한 검증, 검증(Validation), 예외 처리, 검색·필터, 찜, (예정) REST API까지 —
+단순 CRUD가 아니라 회원/세션 로그인, 상품, 권한 검증, 검증(Validation), 예외 처리, 검색·필터, 찜까지 —
 스프링 기본편 · MVC · HTTP 강의에서 배운 내용을 실제 구조로 엮는 것이 목표입니다.
+
+Thymeleaf 서버사이드 렌더링(SSR)으로 시작해 같은 기능을 **JSON REST API로 옮긴 뒤 화면 계층을 걷어냈습니다.**
+지금은 API만 있고 프론트는 없습니다.
 
 > 완성도 높은 서비스가 아니라 **계층형 아키텍처와 HTTP 요청/응답 설계를 몸으로 이해하는 것**이 이 프로젝트의 존재 이유입니다.
 
@@ -15,7 +18,8 @@
 |---|---|
 | Language | Java 21 |
 | Framework | Spring Boot 4.x (Spring MVC) |
-| View | Thymeleaf |
+| API | JSON REST (`@RestController`) |
+| 에러 응답 | `ProblemDetail` (RFC 9457) |
 | Validation | Bean Validation (spring-boot-starter-validation) |
 | Build | Gradle |
 | 저장소 | In-Memory `HashMap` 기반 (→ 구조 완성 후 JPA 전환 예정) |
@@ -24,8 +28,11 @@
 **Spring Security를 쓰지 않는 이유**: 세션·쿠키·인터셉터의 동작 원리를 직접 구현하며 이해하기 위함.
 Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계획.
 
-**Memory Repository로 시작하는 이유**: 지금의 학습 목표는 DB가 아니라 웹 요청 흐름 · MVC 구조 · 계층 분리.
+**Memory Repository로 시작하는 이유**: 지금의 학습 목표는 DB가 아니라 웹 요청 흐름 · 계층 분리.
 `ProductRepository` 인터페이스를 기준으로 구현체만 갈아끼우는 방식(`Memory → JPA`)으로 전환 예정.
+
+**토큰(JWT)이 아니라 세션인 이유**: 프론트가 같은 서버에서 서빙되면 쿠키가 자동으로 실려 나가 세션이 그대로 동작한다.
+인증 방식 전환은 REST 전환과 별개의 주제라, 둘을 한꺼번에 하면 무엇이 깨졌는지 가릴 수 없다.
 
 ---
 
@@ -33,8 +40,10 @@ Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계
 
 ```bash
 ./gradlew bootRun
-# http://localhost:8080 접속
+# API: http://localhost:8080/api/products
 ```
+
+화면은 없습니다. 프론트를 붙이려면 `src/main/resources/static/index.html`에 두면 스프링이 그대로 서빙합니다.
 
 ---
 
@@ -42,33 +51,38 @@ Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계
 
 ### Level 1 — 기본 MVC ✅ 완료
 
-- [x] 회원가입 (폼 검증, 비밀번호 확인 검증, 로그인 아이디 중복 검증)
+- [x] 회원가입 (입력 검증, 비밀번호 확인 검증, 로그인 아이디 중복 검증)
 - [x] 세션 기반 로그인 / 로그아웃 (`HttpSession`, `SessionConst`)
-- [x] 웰컴 페이지 (로그인 시 이름 인사말)
-- [x] 마이페이지 진입 (비로그인 시 로그인 페이지로 리다이렉트)
 - [x] 상품 등록 (로그인 가드, 세션에서 판매자 자동 연결, 등급 선택)
 - [x] 상품 목록 / 상세 조회
 - [x] 내가 등록한 상품 목록
-- [x] 상품 수정 (기존 값 채운 폼 + **서비스 계층 소유권 검증**)
-- [x] 상품 삭제 (확인 창 + 소유권 검증)
-- [x] 전역 예외 처리 (`@ControllerAdvice` + 커스텀 에러 페이지)
+- [x] 상품 수정 (**서비스 계층 소유권 검증**)
+- [x] 상품 삭제 (소유권 검증)
+- [x] 전역 예외 처리 (`@RestControllerAdvice`)
 
 ### Level 2 — 비즈니스 규칙 ✅ 완료
 
-- [x] 로그인 체크 인터셉터 (`LoginCheckInterceptor` + `WebConfig` — 컨트롤러마다 반복되던 세션 체크를 하나로 통합)
-- [x] 검색 / 필터 (`/products?keyword=&minPrice=&maxPrice=&grade=` — 조건별 독립 적용, 빈 조건은 전체 조회)
-- [x] 찜 기능 (하트 토글, 내가 찜한 상품 목록 · 중복 찜 방지 · 삭제된 상품 자동 제외)
+- [x] 로그인 체크 인터셉터 (`ApiLoginCheckInterceptor` + `WebConfig` — 컨트롤러마다 반복되던 세션 체크를 하나로 통합)
+- [x] 검색 / 필터 (`/api/products?keyword=&minPrice=&maxPrice=&grade=` — 조건별 독립 적용, 빈 조건은 전체 조회)
+- [x] 찜 기능 (찜하기·취소 · 내가 찜한 상품 목록 · 중복 찜 방지 · 삭제된 상품 자동 제외)
 
-### Level 3 — REST API + 예외 응답 (예정)
+### Level 3 — REST API 전환 ✅ 완료
 
-- [ ] 찜하기 / 찜 취소 API (`POST·DELETE /api/products/{id}/likes`)
-- [ ] 상품 검색 API (`GET /api/products/search`)
-- [ ] `@RestControllerAdvice` 기반 공통 JSON 예외 응답 (`{ "code": ..., "message": ... }`)
-- [ ] API 전용 DTO
+- [x] 전 기능 API화 (상품 CRUD · 찜 · 마이페이지 · 회원가입 · 로그인/로그아웃)
+- [x] 요청/응답 DTO 분리 (`~Request` / `~Response` record)
+- [x] `@RestControllerAdvice` 기반 공통 JSON 예외 응답 (`ProblemDetail`, RFC 9457)
+- [x] 검증 실패 시 필드별 메시지를 담은 400 응답
+- [x] SSR 계층 제거 (컨트롤러 · 폼 · 템플릿 · 리다이렉트 인터셉터 · 뷰 예외 핸들러)
+
+### Level 4 — 프론트 (예정)
+
+- [ ] `static/` 아래 JS 프론트 투입
+- [ ] 비로그인 401 응답을 받아 로그인 화면으로 보내는 처리 (서버가 하던 302를 클라이언트가 대신한다)
 
 ### 부가 작업 (레벨과 무관 — 아무 때나 끼워 넣어도 되는 항목)
 
 - [ ] 백엔드 로깅 도입 (요청 흐름이 아니라 로그 레벨·구조화 로깅 관점의 일반 로깅 정비)
+- [ ] 등급 목록 API (`GET /api/product-grades`) — 지금은 `S/A/B/C` 고정이라 선택 사항
 
 ### 이후 로드맵
 
@@ -77,39 +91,67 @@ Security 도입은 프로젝트 완성 후 2차 리팩토링으로 진행할 계
 
 ---
 
-## URL 설계
+## API 설계
 
-HTML Form은 GET/POST만 지원하므로 삭제·수정도 POST로 처리하고, JSON API는 별도의 `/api` 경로에서 REST 원칙대로 설계한다.
+REST 원칙대로 자원과 HTTP 메서드로 표현한다. HTML Form의 "GET/POST만 가능" 제약이 사라져
+수정은 `PUT`, 삭제는 `DELETE`를 그대로 쓴다.
 
 > **데이터를 변경하는 요청에 GET을 쓰지 않는다.** GET은 "서버 상태를 바꾸지 않는다(safe)"는 약속이라,
 > 크롤러·브라우저 prefetch·링크 미리보기 봇이 URL을 따라가는 것만으로 데이터가 삭제될 수 있다.
-> 또한 변경 요청의 응답은 항상 redirect로 끝낸다(PRG 패턴) — 새로고침 시 요청이 중복 전송되는 것을 막기 위함.
 
-### 화면 (HTML)
+### 상품
 
-| 기능 | URL | 메서드 |
-|---|---|---|
-| 웰컴 페이지 | `/` | GET |
-| 회원가입 | `/members/new` → `/members` | GET → POST |
-| 로그인 / 로그아웃 | `/login` / `/logout` | GET·POST / POST |
-| 상품 목록 / 검색 | `/products?keyword=&minPrice=&maxPrice=&grade=` | GET |
-| 상품 상세 | `/products/{id}` | GET |
-| 상품 등록 | `/products/new` → `/products` | GET → POST |
-| 상품 수정 | `/products/{id}/edit` | GET → POST |
-| 상품 삭제 | `/products/{id}/delete` | POST |
-| 찜하기 / 찜 취소 | `/products/{id}/likes` / `/products/{id}/likes/delete` | POST / POST |
-| 마이페이지 | `/my-page` | GET |
-| 내가 등록한 상품 | `/my-page/products` | GET |
-| 내가 찜한 상품 | `/my-page/likes` | GET |
+| 기능 | URL | 메서드 | 로그인 | 성공 응답 |
+|---|---|---|---|---|
+| 목록 / 검색 | `/api/products?keyword=&minPrice=&maxPrice=&grade=` | GET | 불필요 | `200` 배열 |
+| 상세 | `/api/products/{id}` | GET | 불필요 | `200` |
+| 등록 | `/api/products` | POST | 필요 | `201` + `Location` |
+| 수정 | `/api/products/{id}` | PUT | 필요 | `204` |
+| 삭제 | `/api/products/{id}` | DELETE | 필요 | `204` |
 
-찜을 토글 하나로 두지 않고 추가·취소로 나눈 이유는 아래 설계 원칙 7번 참고.
+조회만 열려 있다. 둘러보다 마음에 들면 가입하는 흐름이라 목록·상세를 막으면 가입 전 방문자가 볼 것이 없다.
 
-### API (예정)
+### 찜 · 마이페이지
 
-| 기능 | URL | 메서드 |
-|---|---|---|
-| 찜하기 / 찜 취소 | `/api/products/{id}/likes` | POST / DELETE |
-| 상품 검색 | `/api/products/search?keyword=&grade=` | GET |
+| 기능 | URL | 메서드 | 성공 응답 |
+|---|---|---|---|
+| 찜하기 | `/api/me/likes/{productId}` | PUT | `204` |
+| 찜 취소 | `/api/me/likes/{productId}` | DELETE | `204` |
+| 내가 찜한 상품 | `/api/me/likes` | GET | `200` 배열 |
+| 내 정보 | `/api/me` | GET | `200` |
+| 내가 등록한 상품 | `/api/me/products` | GET | `200` 배열 |
+
+경로를 상품이 아니라 **"나"에 매달았다.** 찜은 상품의 속성이 아니라 회원과 상품의 관계이고,
+누구의 것인지는 세션이 정하므로 클라이언트가 남의 것을 가리킬 방법 자체가 생기지 않는다.
+
+### 회원 · 인증
+
+| 기능 | URL | 메서드 | 로그인 | 성공 응답 |
+|---|---|---|---|---|
+| 회원가입 | `/api/members` | POST | 불필요 | `201` |
+| 로그인 | `/api/login` | POST | 불필요 | `200` |
+| 로그아웃 | `/api/logout` | POST | 불필요 | `204` |
+
+로그아웃을 막지 않는 이유: 세션이 없으면 아무 일도 안 하고 `204`다. 막으면 로그아웃하려는 사람에게 401이 나간다.
+
+### 에러 응답
+
+모두 `ProblemDetail`(RFC 9457) 한 가지 형식이다. 인터셉터가 내는 401도 같은 모양이라
+클라이언트는 실패 처리를 한 벌만 만들면 된다.
+
+```json
+{ "type": "about:blank", "title": "Bad Request", "status": 400,
+  "detail": "입력값이 올바르지 않습니다.",
+  "errors": { "title": "제목을 입력하세요.", "price": "가격을 입력해주셔야 합니다." } }
+```
+
+| 상태 | 상황 |
+|---|---|
+| `400` | 입력 검증 실패(필드별 메시지 포함) · 본문 파싱 실패 |
+| `401` | 비로그인 · 로그인 실패 |
+| `403` | 남의 상품 수정·삭제 |
+| `404` | 없는 상품 |
+| `409` | 아이디 중복 |
 
 ---
 
@@ -119,19 +161,20 @@ HTML Form은 GET/POST만 지원하므로 삭제·수정도 POST로 처리하고,
 used.system
  ├── SystemApplication
  ├── config
- │    ├── WebConfig               # 인터셉터 등록 (경로별 로그인 요구 여부 배선)
- │    └── LoginCheckInterceptor   # 세션 미인증 요청을 컨트롤러 진입 전에 차단
+ │    ├── WebConfig                  # 인터셉터 등록 (경로·메서드별 로그인 요구 여부 배선)
+ │    └── ApiLoginCheckInterceptor   # 세션 미인증 요청을 컨트롤러 진입 전에 401로 차단
  ├── controller
- │    ├── home        # 웰컴 페이지
- │    ├── like        # 찜하기 / 찜 취소
- │    ├── member      # 회원가입, 로그인/로그아웃, SessionConst, Form 객체
- │    ├── myPage      # 마이페이지, 내가 등록한 상품, 내가 찜한 상품
- │    └── product     # 상품 등록/목록/상세/수정, Form 객체, 검색 조건
- ├── like             # Like 도메인, Service, Repository(Memory)
+ │    ├── like        # 찜 API
+ │    ├── member      # 회원가입·로그인/로그아웃 API, SessionConst, 요청/응답 DTO, @PasswordMatch
+ │    ├── myPage      # 내 정보 / 내가 등록한 상품 API
+ │    └── product     # 상품 API, 요청/응답 DTO
+ ├── like             # Like 도메인, ProductLikeStatus, Service, Repository(Memory)
  ├── member           # Member 도메인, Service, Repository(Memory)
  ├── product          # Product 도메인, ProductGrade, Service, Repository(Memory), UpdateDto, SearchCond
- └── exception        # 커스텀 예외 + GlobalExceptionHandler(@ControllerAdvice)
+ └── exception        # 커스텀 예외 + ApiExceptionHandler(@RestControllerAdvice)
 ```
+
+**서비스·리포지토리 계층은 도메인으로 나누고, 웹 계층과 예외는 계층으로 모은다.**
 
 ---
 
@@ -142,76 +185,101 @@ used.system
 ### 1. 계층 의존은 한 방향으로만
 
 ```
-controller → service → repository
-   (Form)      (Dto)      (Domain)
+controller  →  service  →  repository
+(Request/Response)  (Dto)     (Domain)
 ```
 
 - 컨트롤러는 요청/응답 흐름만, 비즈니스 로직은 서비스에, 저장은 리포지토리에.
-- 서비스는 웹 계층 객체(Form)를 모른다 → `Form.toDto()`로 변환해 전달 (`ProductUpdateDto`).
+- 서비스는 웹 계층 객체를 모른다 → `Request.toDto()`로 변환해 전달 (`ProductUpdateDto`).
 - 도메인은 DTO조차 모른다 → 서비스가 DTO를 풀어 값으로 전달 (`product.update(...)`).
+- **두 도메인을 합치는 일도 컨트롤러가 아니라 서비스가 한다.** 상품 목록에 "내가 찜했나"를
+  붙이는 것은 `LikeService.attachLikeStatus`의 몫이다 — 컨트롤러에서 두 서비스 결과를 합치면
+  "비로그인은 찜이 없는 것으로 친다"는 규칙이 목록 화면마다 복사된다.
 
-### 2. Form과 Domain의 분리
+### 2. 요청 DTO와 Domain의 분리
 
-- 폼 객체(`MemberForm`, `ProductForm`, …)는 화면 입력 + 형식 검증 전용.
-- 사용자가 입력해선 안 되는 값(`sellerId` 등)은 폼에 두지 않는다 → 과잉 바인딩(mass assignment) 방지.
+- 요청 DTO(`MemberJoinRequest`, `ProductCreateRequest`, …)는 입력 + 형식 검증 전용 `record`.
+- 사용자가 입력해선 안 되는 값(`sellerId` 등)은 **DTO에 두지 않는다** → 과잉 바인딩(mass assignment) 방지.
 - 판매자 식별은 입력값이 아닌 **세션**에서 가져온다.
 
-### 3. 검증의 이원화
+### 3. 응답 DTO와 Domain의 분리
+
+- 도메인 객체를 그대로 응답에 싣지 않는다. `Member`를 반환하면 **비밀번호가 그대로 나간다.**
+- 화면이 쓰는 필드만 추린다 → 도메인에 필드를 더해도 API 계약이 따라 흔들리지 않는다.
+- 필드가 정확히 같은 응답은 합친다(`ProductSummaryResponse`가 찜 목록과 내 상품 목록을 함께 쓴다).
+  이름만 다른 동일 record를 여러 개 두지 않는다.
+
+### 4. 검증의 삼원화
 
 | 종류 | 예 | 처리 위치 |
 |---|---|---|
-| 형식 검증 | 빈 값, 길이, 최소 가격 | 폼 객체 어노테이션 (`@NotBlank`, `@Size`, `@Min`) + `BindingResult` |
-| 필드 간 비교 | 비밀번호 확인 일치 | 컨트롤러에서 `rejectValue` |
+| 형식 검증 | 빈 값, 길이, 최소 가격 | 요청 DTO 어노테이션 (`@NotBlank`, `@Size`) |
+| 필드 간 비교 | 비밀번호 확인 일치 | 클래스 레벨 커스텀 제약 (`@PasswordMatch`) |
 | 비즈니스 검증 | 아이디 중복, 소유권 | **서비스 계층** (저장소를 봐야 판단 가능한 규칙) |
 
-### 4. 예외 처리의 이원화 — "사용자가 고칠 수 있는가?"
+비밀번호 확인을 컨트롤러에서 직접 비교하지 않고 어노테이션으로 둔 이유는 **에러 응답 형식** 때문이다.
+컨트롤러에서 따로 처리하면 이 오류만 다른 모양의 400이 나가, 클라이언트가 실패 처리를 두 벌 만들어야 한다.
+위반을 `passwordConfirm` 필드에 매달아야 응답의 `errors`가 나머지 검증 실패와 같은 모양이 된다.
 
-| 상황 | 처리 | 이유 |
+**컨트롤러는 `BindingResult`를 받지 않는다.** 받으면 검증 실패가 예외로 올라가지 않아 400이 나가지 않는다.
+단 하나의 예외가 검색 조건(`ProductSearchCond`)인데, 거기서는 **일부러 삼킨다** — 원칙 8 참고.
+
+### 5. 예외는 한곳에서 상태 코드로 옮긴다
+
+컨트롤러에서 try-catch로 흩뿌리지 않는다. 같은 예외가 부르는 곳에 따라 다른 코드로 나가면 안 되기 때문이다.
+
+| 예외 | 상태 | 의미 |
 |---|---|---|
-| 중복 아이디 등 재시도로 해결 가능 | 컨트롤러 try-catch → `rejectValue` → **폼 재표시** | 입력값 유지 + 필드 에러 표시에 필요한 재료(폼, BindingResult)는 컨트롤러에만 있다 |
-| 없는 상품(404), 남의 상품 접근(403) 등 | 그대로 전파 → `@ControllerAdvice` → **에러 페이지** | 사용자가 고칠 수 없는 상황은 안내가 최선 |
+| `ProductNotFoundException` | `404` | 없는 자원 |
+| `ForbiddenException` | `403` | 누구인지는 알지만 권한이 없다 |
+| `LoginFailedException` | `401` | 아직 누구인지 확인되지 않았다 |
+| `DuplicateLoginIdException` | `409` | 요청은 멀쩡하고 지금 서버 상태와 부딪힌다 |
 
-현재 예외: `ProductNotFoundException`(404) · `MemberNotFoundException`(404) · `ForbiddenException`(403) · `DuplicateLoginIdException`(폼 에러 변환)
+`401`과 `403`을 나누는 기준이 "인증이냐 인가냐"다. 로그인 실패는 403이 아니다.
+`409`를 `400`과 나눠두면 클라이언트가 "입력을 고쳐라"와 "그 아이디는 임자가 있다"를 구분해 안내할 수 있다.
 
-### 5. 보안 검증은 서버가, 화면 동선은 안내일 뿐
+로그인 실패 메시지는 아이디와 비밀번호를 **구분하지 않는다** — "없는 아이디입니다"라고 답하면
+공격자가 어떤 아이디가 존재하는지 하나씩 확인할 수 있다.
 
-- 버튼 숨기기/페이지 동선 차단은 보안이 아니다 — URL 직접 접근은 언제나 가능하다.
-- **인증**(로그인 여부)은 `LoginCheckInterceptor`가 컨트롤러 진입 전에 일괄 차단한다.
-  - 인터셉터의 경로 매칭은 HTTP 메서드를 구분하지 못한다 — `/products`처럼 GET(조회)은
+### 6. 보안 검증은 서버가, 클라이언트는 믿지 않는다
+
+- **인증**(로그인 여부)은 `ApiLoginCheckInterceptor`가 컨트롤러 진입 전에 일괄 차단한다.
+  - 302로 로그인 페이지에 보내지 않고 **401**을 준다. 302를 주면 클라이언트가 실패를
+    로그인 HTML 본문으로 받아, 요청이 실패했다는 사실 자체가 전달되지 않는다.
+  - 인터셉터의 경로 매칭은 HTTP 메서드를 구분하지 못한다 — `/api/products`처럼 GET(조회)은
     공개, POST(등록)만 보호해야 하는 경로는 `guardedMethods`로 메서드를 좁혀 별도 등록한다.
   - "전부 막고 열 곳만 뚫는다" 방식(`excludePathPatterns`)을 쓴다. 반대로 막을 곳만
-    나열하면, 새 페이지를 추가하며 등록을 잊었을 때 그 페이지가 조용히 무방비로 열린다.
+    나열하면, 새 경로를 추가하며 등록을 잊었을 때 그 경로가 조용히 무방비로 열린다.
 - **인가**(소유권 검증, "본인 상품만 수정·삭제 가능")는 인터셉터가 아니라 **서비스 계층**에
   둔다. 인터셉터는 "누구냐"만 알고 "이 자원이 이 사람 것이냐"는 데이터를 봐야 판단
   가능한 비즈니스 규칙이라, 어떤 호출 경로로 들어와도 우회 불가능한 서비스가 최종 방어선이다.
-- 삭제 확인 창(`confirm`)은 실수 방지용 UX일 뿐 보안 장치가 아니다 — JS를 끄거나 직접 요청을 보내면 무력화된다.
+- **로그인 시 세션을 새로 발급한다.** 남이 심어둔 세션 id를 그대로 쓰면 로그인으로 그 세션이
+  인증된 상태가 되어 심은 쪽이 함께 들어온다(**세션 고정**). 인자 없는 `getSession()`은
+  기존 세션을 그대로 승격시키므로 쓰지 않는다.
 
-### 6. 도메인 응집도
+### 7. 도메인 응집도
 
 - 무분별한 setter를 열어두지 않는다 — 상태 변경은 의미 있는 메서드(`product.update(...)`)로만.
 - 수정 시각(`updatedAt`) 갱신처럼 상태 변경에 따라오는 규칙은 도메인 메서드 안에서 자동 처리.
+- `setId`만 예외다 — 리포지토리가 `save()` 시점에 채번해 부여하는 통로.
 
-### 7. 같은 요청이 두 번 와도 결과가 같아야 한다 (멱등성)
+### 8. 같은 요청이 두 번 와도 결과가 같아야 한다 (멱등성)
 
-- 하트 연타, 새로고침, 네트워크 재시도로 **같은 요청이 중복 도착하는 것은 정상**이다.
-- 그래서 찜을 **토글 하나로 만들지 않는다.** 토글은 두 번 보내면 결과가 뒤집힌다.
-  추가(`/likes`)와 취소(`/likes/delete`)로 나누고, 어느 폼을 그릴지는 화면이 현재 상태를 보고 정한다.
-  사용자에게는 여전히 하트 하나를 누르는 것으로 보인다.
+- 연타, 새로고침, 네트워크 재시도로 **같은 요청이 중복 도착하는 것은 정상**이다.
+- 찜하기에 `PUT`, 취소에 `DELETE`를 쓴다. 둘 다 멱등이라 같은 요청이 두 번 도착해도 결과가 같다.
+  "찜된 상태로 만들어라"는 요청이므로 몇 번을 보내든 최종 상태가 하나다.
 - 이미 찜한 상품을 다시 찜하거나, 찜하지 않은 것을 취소해도 **예외 대신 통과**시킨다.
-  이미 원하는 상태인데 에러 화면을 띄울 이유가 없다. 중복 저장이 막히는 것은 그대로다.
+  이미 원하는 상태인데 에러를 낼 이유가 없다. 중복 저장이 막히는 것은 그대로다.
+- **조회는 잘못된 조건에 실패로 답하지 않는다.** `/api/products?minPrice=abc`가 와도
+  가격 조건만 빠진 채 나머지로 검색된다. 400으로 끊으면 클라이언트가 그 400을 받아
+  "무시하고 목록을 열까"를 다시 판단해야 해서, 같은 정책을 서버와 클라이언트 두 곳에 두게 된다.
 
-### 8. 목록 화면에서 항목마다 조회하지 않는다
+### 9. 목록에서 항목마다 조회하지 않는다
 
 - "이 상품을 내가 찜했나"를 상품마다 물으면 목록 길이만큼 질의가 늘어난다(N+1).
-- 대신 **내 찜 id 전체를 `Set`으로 한 번 받아**, 화면은 `contains`만 확인한다.
-- 비로그인에는 `null`이 아니라 **빈 `Set`**을 넘긴다 — `null`이면 템플릿의 `contains` 호출이 터진다.
-  "없음"은 언제나 빈 컬렉션으로 표현한다(리포지토리 반환값도 동일).
-
-### 9. 클라이언트가 보낸 값으로 이동하지 않는다
-
-- 찜 후 원래 화면으로 되돌릴 때 `Referer` 헤더를 쓰되, **경로와 쿼리만 떼어 쓰고 호스트는 버린다.**
-- 값을 그대로 `redirect:`에 넣으면 외부 주소로 사용자를 튕겨 보낼 수 있다(**오픈 리다이렉트**).
-  헤더는 조작 가능한 입력이므로 신뢰하지 않는다 — 원칙 5의 "클라이언트를 믿지 않는다"와 같은 이유.
+- 대신 **내 찜 id 전체를 `Set`으로 한 번 받아** `contains`로 대조한다.
+- 비로그인에는 `null`이 아니라 **빈 `Set`**을 넘긴다. "없음"은 언제나 빈 컬렉션으로 표현한다
+  (리포지토리의 `Optional` 반환도 같은 사상이다 — 없는 것은 에러가 아니다).
 
 ---
 
@@ -221,9 +289,11 @@ controller → service → repository
 쓰지 않는다 — 느리고, 이 프로젝트의 학습 목표(계층 간 책임 분리를 코드로 확인하는 것)에는
 컨트롤러/서비스 메서드를 직접 호출하는 것으로 충분하다.
 
-- 컨트롤러: `BindingResult`는 `BeanPropertyBindingResult`, 세션은 `MockHttpServletRequest`로
-  직접 만들어 넘긴다. 둘 다 컨텍스트 없이 동작하는 단순 구현체다.
-- 폼 검증: `Validation.buildDefaultValidatorFactory()`로 Validator를 직접 만든다.
+- 컨트롤러: 세션은 `MockHttpServletRequest`/`MockHttpSession`으로 직접 만들어 넘긴다.
+  컨텍스트 없이 동작하는 단순 구현체다.
+- 요청 DTO 검증: `Validation.buildDefaultValidatorFactory()`로 Validator를 직접 만든다.
+  등록·수정처럼 같은 규칙이어야 하는 짝은 **제약 메타데이터를 통째로 견준다** — 한쪽에만
+  어노테이션을 더하거나 메시지를 고치는 실수는 값 몇 개를 넣어보는 방식으로는 드러나지 않는다.
 - 인터셉터 배선(`WebConfigTest`): `InterceptorRegistry`에서 등록 결과를 직접 꺼내
   `DispatcherServlet`이 하는 매칭·`preHandle` 순회를 그대로 흉내 낸다. 어느 URL이 보호돼야
   하는지는 정책 판단이라 테스트 대상이 아니고, `WebConfig`에 적어둔 의도대로 실제 매칭이

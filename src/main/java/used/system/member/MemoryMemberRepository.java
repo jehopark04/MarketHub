@@ -17,16 +17,6 @@ public class MemoryMemberRepository implements MemberRepository {
   }
 
   @Override
-  public Optional<Member> findById(Long id) {
-    return Optional.ofNullable(memberMap.get(id));
-  }
-
-  @Override
-  public List<Member> findAll() {
-    return new ArrayList<>(memberMap.values());
-  }
-
-  @Override
   public Optional<Member> findByLoginId(String loginId) {
     return memberMap.values().stream()
         .filter(member -> member.getLoginId().equals(loginId))

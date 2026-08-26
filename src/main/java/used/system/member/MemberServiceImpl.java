@@ -1,10 +1,8 @@
 package used.system.member;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import used.system.exception.DuplicateLoginIdException;
-import used.system.exception.MemberNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -21,18 +19,6 @@ public class MemberServiceImpl implements MemberService {
               throw new DuplicateLoginIdException("이미 사용중인 아이디입니다."); // 이 예외를 누가 받을 것인가.
             });
     return memberRepository.save(member);
-  }
-
-  @Override
-  public Member findMember(Long id) {
-    return memberRepository
-        .findById(id)
-        .orElseThrow(() -> new MemberNotFoundException("회원을 찾을 수 없습니다. id = " + id));
-  }
-
-  @Override
-  public List<Member> findMemberAll() {
-    return memberRepository.findAll();
   }
 
   //    @Override

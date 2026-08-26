@@ -98,13 +98,4 @@ class ProductServiceImplTest {
 
     verify(productRepository, never()).delete(999L);
   }
-
-  @Test
-  @DisplayName("findByIdAndOwner는 본인 상품이면 상품을 반환한다")
-  void findByIdAndOwner_owner() {
-    Product product = ownedProduct();
-    given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-    assertThat(productService.findByIdAndOwner(1L, "userA")).isSameAs(product);
-  }
 }

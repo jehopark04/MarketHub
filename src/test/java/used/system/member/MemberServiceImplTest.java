@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import used.system.exception.DuplicateLoginIdException;
-import used.system.exception.MemberNotFoundException;
 
 /**
  * MemberServiceImpl 단위 테스트 - 저장소는 Mockito로 가짜(mock)를 주입해 서비스의 비즈니스 로직만 격리해서 검증한다. (실제 저장 여부가 아니라
@@ -83,23 +82,5 @@ class MemberServiceImplTest {
     Member result = memberService.login("nobody", "password1");
 
     assertThat(result).isNull();
-  }
-
-  @Test
-  @DisplayName("findMember는 저장된 회원을 반환한다")
-  void findMember_found() {
-    Member member = new Member("userA", "에이", "password1");
-    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
-
-    assertThat(memberService.findMember(1L)).isSameAs(member);
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 회원을 조회하면 MemberNotFoundException이 발생한다")
-  void findMember_notFound() {
-    given(memberRepository.findById(999L)).willReturn(Optional.empty());
-
-    assertThatThrownBy(() -> memberService.findMember(999L))
-        .isInstanceOf(MemberNotFoundException.class);
   }
 }

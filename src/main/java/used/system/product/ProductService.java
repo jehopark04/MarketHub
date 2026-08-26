@@ -17,7 +17,5 @@ public interface ProductService {
 
   void editProduct(Long productId, String loginId, ProductUpdateDto productUpdateDto);
 
-  Product findByIdAndOwner(Long productId, String loginId);
-
   void deleteProduct(Long productId, String loginId);
 }

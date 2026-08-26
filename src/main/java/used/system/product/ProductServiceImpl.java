@@ -41,11 +41,6 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public Product findByIdAndOwner(Long productId, String loginId) {
-    return getOwnerProduct(productId, loginId);
-  }
-
-  @Override
   public void deleteProduct(Long productId, String loginId) {
     getOwnerProduct(productId, loginId);
     productRepository.delete(productId);

@@ -31,11 +31,6 @@ public class ApiExceptionHandler {
     return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
   }
 
-  @ExceptionHandler(MemberNotFoundException.class)
-  public ProblemDetail handleMemberNotFound(MemberNotFoundException e) {
-    return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-  }
-
   @ExceptionHandler(ForbiddenException.class)
   public ProblemDetail handleForbidden(ForbiddenException e) {
     return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, e.getMessage());

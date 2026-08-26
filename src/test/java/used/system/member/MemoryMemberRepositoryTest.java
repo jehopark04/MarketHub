@@ -29,22 +29,6 @@ class MemoryMemberRepositoryTest {
   }
 
   @Test
-  @DisplayName("id로 저장된 회원을 조회한다")
-  void findById() {
-    Member saved = repository.save(new Member("userA", "에이", "password1"));
-
-    Optional<Member> found = repository.findById(saved.getId());
-
-    assertThat(found).containsSame(saved);
-  }
-
-  @Test
-  @DisplayName("없는 id로 조회하면 빈 Optional을 반환한다")
-  void findById_notFound() {
-    assertThat(repository.findById(999L)).isEmpty();
-  }
-
-  @Test
   @DisplayName("loginId로 회원을 찾으면 Optional에 담겨 반환된다")
   void findByLoginId_present() {
     repository.save(new Member("userA", "에이", "password1"));
@@ -61,22 +45,5 @@ class MemoryMemberRepositoryTest {
     Optional<Member> found = repository.findByLoginId("nobody");
 
     assertThat(found).isEmpty();
-  }
-
-  @Test
-  @DisplayName("findAll은 저장된 모든 회원을 반환한다")
-  void findAll() {
-    repository.save(new Member("userA", "에이", "password1"));
-    repository.save(new Member("userB", "비", "password2"));
-
-    assertThat(repository.findAll())
-        .extracting(Member::getLoginId)
-        .containsExactlyInAnyOrder("userA", "userB");
-  }
-
-  @Test
-  @DisplayName("저장된 회원이 없으면 findAll은 빈 리스트를 반환한다")
-  void findAll_empty() {
-    assertThat(repository.findAll()).isEmpty();
   }
 }

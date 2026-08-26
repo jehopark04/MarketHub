@@ -131,4 +131,39 @@ class LikeServiceImplTest {
     // 삭제된 상품을 걸러내는 일은 findAllByIds의 규약이다. 여기서는 id를 순서대로 넘기는지만 본다.
     verify(productService).findAllByIds(List.of(3L, 1L));
   }
+
+  // ---------- 찜 여부 붙이기 ----------
+
+  private Product product(Long id) {
+    Product product = product();
+    product.setId(id);
+    return product;
+  }
+
+  @Test
+  @DisplayName("찜한 상품에만 liked가 붙고 받은 순서는 그대로다")
+  void attachLikeStatus() {
+    given(likeRepository.findByMemberId("userA")).willReturn(List.of(new Like("userA", 3L)));
+
+    List<ProductLikeStatus> result =
+        likeService.attachLikeStatus(List.of(product(5L), product(3L)), "userA");
+
+    assertThat(result).extracting(ProductLikeStatus::liked).containsExactly(false, true);
+  }
+
+  @Test
+  @DisplayName("비로그인이면 저장소를 보지 않고 전부 false다")
+  void attachLikeStatus_anonymous() {
+    // loginId가 null인데 조회로 넘어가면 "찜한 적 없는 회원"을 찾는 헛질의가 목록마다 나간다.
+    List<ProductLikeStatus> result = likeService.attachLikeStatus(List.of(product(3L)), null);
+
+    assertThat(result).extracting(ProductLikeStatus::liked).containsExactly(false);
+    verify(likeRepository, never()).findByMemberId(any());
+  }
+
+  @Test
+  @DisplayName("상품이 없으면 빈 목록이다")
+  void attachLikeStatus_emptyProducts() {
+    assertThat(likeService.attachLikeStatus(List.of(), "userA")).isEmpty();
+  }
 }

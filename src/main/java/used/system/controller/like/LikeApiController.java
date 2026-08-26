@@ -1,14 +1,17 @@
 package used.system.controller.like;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import used.system.controller.member.SessionConst;
+import used.system.controller.product.ProductSummaryResponse;
 import used.system.like.LikeService;
 import used.system.member.Member;
 
@@ -51,5 +54,15 @@ public class LikeApiController {
 
     likeService.unlike(productId, loginMember.getLoginId());
     return ResponseEntity.noContent().build();
+  }
+
+  /** 찜한 뒤 삭제된 상품은 LikeService.findLikedProducts가 이미 걸러서 뺀다. 빈 목록도 200이다. */
+  @GetMapping
+  public List<ProductSummaryResponse> myLikes(
+      @SessionAttribute(name = SessionConst.LOGIN_MEMBER) Member loginMember) {
+
+    return likeService.findLikedProducts(loginMember.getLoginId()).stream()
+        .map(ProductSummaryResponse::from)
+        .toList();
   }
 }

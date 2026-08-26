@@ -75,4 +75,39 @@ class ApiLoginCheckInterceptorTest {
     assertThat(response.getStatus()).isEqualTo(200); // 아직 아무도 손대지 않은 기본값
     assertThat(response.getContentAsString()).isEmpty();
   }
+
+  // ---------- 메서드를 지정한 등록 ----------
+
+  @Test
+  @DisplayName("검사 대상 메서드가 아니면 비로그인이라도 통과시킨다")
+  void 대상_메서드가_아니면_통과() throws Exception {
+    // /api/products는 목록 조회(GET)와 상품 등록(POST)이 같은 경로다. 목록은 비로그인도 봐야 한다.
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/products");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    assertThat(new ApiLoginCheckInterceptor("POST").preHandle(request, response, handler)).isTrue();
+    assertThat(response.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  @DisplayName("검사 대상 메서드면 비로그인일 때 401로 끊는다")
+  void 대상_메서드면_비로그인_차단() throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/products");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    assertThat(new ApiLoginCheckInterceptor("POST").preHandle(request, response, handler))
+        .isFalse();
+    assertThat(response.getStatus()).isEqualTo(401);
+  }
+
+  @Test
+  @DisplayName("메서드를 지정하지 않으면 메서드를 가리지 않고 검사한다")
+  void 메서드_미지정이면_전부_검사() throws Exception {
+    // isEmpty() 검사를 빠뜨리면 여기가 통과로 뒤집힌다 - 찜 API 전체가 무인증으로 열린다.
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/me/likes");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    assertThat(new ApiLoginCheckInterceptor().preHandle(request, response, handler)).isFalse();
+    assertThat(response.getStatus()).isEqualTo(401);
+  }
 }

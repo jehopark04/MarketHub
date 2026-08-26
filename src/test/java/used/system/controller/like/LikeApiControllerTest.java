@@ -2,9 +2,11 @@ package used.system.controller.like;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +15,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import used.system.controller.product.ProductSummaryResponse;
 import used.system.exception.ProductNotFoundException;
 import used.system.like.LikeService;
 import used.system.member.Member;
+import used.system.product.Product;
+import used.system.product.ProductGrade;
 
 /**
  * LikeApiController 단위 테스트 - 컨트롤러 메서드를 직접 호출한다.
@@ -64,5 +69,25 @@ class LikeApiControllerTest {
 
     assertThatThrownBy(() -> likeApiController.like(99L, loginMember))
         .isInstanceOf(ProductNotFoundException.class);
+  }
+
+  @Test
+  @DisplayName("세션 회원의 찜 목록을 DTO로 변환해 반환한다")
+  void myLikes_returnsDtoList() {
+    Product product = new Product("sellerX", "제목", "설명", 1000, ProductGrade.A);
+    product.setId(1L);
+    given(likeService.findLikedProducts("userA")).willReturn(List.of(product));
+
+    List<ProductSummaryResponse> result = likeApiController.myLikes(loginMember);
+
+    assertThat(result).containsExactly(new ProductSummaryResponse(1L, "제목", 1000, ProductGrade.A));
+  }
+
+  @Test
+  @DisplayName("찜한 상품이 없으면 빈 목록을 반환한다")
+  void myLikes_empty() {
+    given(likeService.findLikedProducts("userA")).willReturn(List.of());
+
+    assertThat(likeApiController.myLikes(loginMember)).isEmpty();
   }
 }

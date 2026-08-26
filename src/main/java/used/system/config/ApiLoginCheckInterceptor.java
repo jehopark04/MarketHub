@@ -4,16 +4,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.HandlerInterceptor;
 import used.system.controller.member.SessionConst;
 
 /**
- * API 요청의 로그인 검사.
+ * 로그인 검사. 세션에 로그인 회원이 없으면 컨트롤러에 닿기 전에 401로 끊는다.
  *
- * <p>LoginCheckInterceptor와 판단은 같고 거절하는 방법만 다르다. 화면은 로그인 페이지로 보내면 되지만, API에 302를 주면 클라이언트가 로그인
- * HTML을 응답 본문으로 받는다 — 요청이 실패했다는 사실이 전달되지 않는다. 그래서 401로 끊는다.
+ * <p>302로 로그인 페이지에 보내지 않는다. 클라이언트가 실패를 로그인 HTML 본문으로 받게 되어, 요청이 실패했다는 사실 자체가 전달되지 않는다.
  *
  * <p>본문 형식은 RFC 9457(Problem Details)을 따른다. ApiExceptionHandler가 내보내는 형식과 같아야 클라이언트가 실패를 한 가지 방법으로만
  * 처리할 수 있다. 여기는 인터셉터라 @ExceptionHandler가 닿지 않으므로 같은 모양을 직접 쓴다.
@@ -24,9 +24,25 @@ public class ApiLoginCheckInterceptor implements HandlerInterceptor {
       "{\"type\":\"about:blank\",\"title\":\"Unauthorized\",\"status\":401,"
           + "\"detail\":\"로그인이 필요합니다.\"}";
 
+  /**
+   * 검사할 HTTP 메서드. 비어 있으면 메서드를 가리지 않고 전부 검사한다.
+   *
+   * <p>조회는 열고 쓰기는 막아야 하는 경로(/api/products)가 있어서 필요하다. 인터셉터의 경로 매칭은 GET·POST를 구분하지 못한다.
+   */
+  private final Set<String> guardedMethods;
+
+  public ApiLoginCheckInterceptor(String... guardedMethods) {
+    this.guardedMethods = Set.of(guardedMethods);
+  }
+
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
       throws Exception {
+
+    // isEmpty() 검사를 빠뜨리면 인자 없이 만든 인터셉터가 모든 요청을 통과시킨다 - 무인증으로 열린다.
+    if (!guardedMethods.isEmpty() && !guardedMethods.contains(request.getMethod())) {
+      return true;
+    }
 
     // false여야 한다. 인자 없는 getSession()은 세션이 없으면 새로 만들어버린다.
     HttpSession session = request.getSession(false);

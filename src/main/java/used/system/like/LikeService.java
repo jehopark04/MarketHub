@@ -17,4 +17,11 @@ public interface LikeService {
 
   /** 내가 찜한 상품들. 찜한 뒤 삭제된 상품은 빠진다. */
   List<Product> findLikedProducts(String loginId);
+
+  /**
+   * 상품들에 내 찜 여부를 붙인다. 순서는 받은 그대로다.
+   *
+   * @param loginId 비로그인이면 null. 이때는 전부 false가 된다.
+   */
+  List<ProductLikeStatus> attachLikeStatus(List<Product> products, String loginId);
 }

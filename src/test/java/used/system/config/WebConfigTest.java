@@ -55,9 +55,29 @@ class WebConfigTest {
     "GET /products/5",
   };
 
-  /** 로그인이 필요한 API 요청. 화면과 달리 거절 방식이 401이라 목록을 따로 둔다. */
+  /**
+   * 로그인이 필요한 API 요청. 화면과 달리 거절 방식이 401이라 목록을 따로 둔다.
+   *
+   * <p>상품 쓰기 셋이 특히 중요하다. 같은 경로의 조회를 열어둔 상태라, 메서드 가드가 빠지면 비로그인이 남의 상품을 등록·수정·삭제할 수 있게 된다.
+   */
   private static final String[] API_보호_대상 = {
-    "PUT /api/me/likes/5", "DELETE /api/me/likes/5",
+    "PUT /api/me/likes/5",
+    "DELETE /api/me/likes/5",
+    "GET /api/me/likes",
+    "GET /api/me",
+    "GET /api/me/products",
+    "POST /api/products",
+    "PUT /api/products/5",
+    "DELETE /api/products/5",
+  };
+
+  /** 로그인 없이 열려야 하는 API 요청. 같은 내용의 화면이 이미 공개라 정책을 맞춘 것들이다. */
+  private static final String[] API_공개_대상 = {
+    "GET /api/products",
+    "GET /api/products/5",
+    "POST /api/members",
+    "POST /api/login",
+    "POST /api/logout",
   };
 
   /** InterceptorRegistry.getInterceptors()가 protected라 서브클래스로만 꺼낼 수 있다. */
@@ -203,6 +223,46 @@ class WebConfigTest {
             }
           }
         });
+  }
+
+  @Test
+  @DisplayName("공개 API는 비로그인도 컨트롤러까지 통과시킨다")
+  void 공개_API는_비로그인도_통과시킨다() {
+    // excludePathPatterns를 지우면 여기가 깨진다. 화면은 열려 있는데 API만 401을 주는 상태는
+    // 브라우저로 목록을 열어보는 것만으로는 드러나지 않아, 배선을 여기서 고정한다.
+    SoftAssertions.assertSoftly(
+        softly -> {
+          for (String each : API_공개_대상) {
+            String[] parts = each.split(" ");
+            try {
+              Chain chain = run(parts[0], parts[1], null);
+              softly.assertThat(chain.reached()).as("%s — 컨트롤러 도달 여부", each).isTrue();
+            } catch (Exception e) {
+              softly.fail("%s 검사 중 예외: %s", each, e);
+            }
+          }
+        });
+  }
+
+  @Test
+  @DisplayName("같은 /api/products라도 조회는 열리고 등록은 막힌다")
+  void 메서드가_상품_API를_가른다() throws Exception {
+    // 조회를 열려고 excludePathPatterns에 넣은 경로다. 메서드 가드를 지우면 이 경로의 POST·PUT·DELETE가
+    // 통째로 무인증으로 열리는데, 브라우저로 목록을 열어보는 것만으로는 전혀 드러나지 않는다.
+    assertThat(run("GET", "/api/products", null).reached()).isTrue();
+    assertThat(run("POST", "/api/products", null).reached()).isFalse();
+
+    assertThat(run("GET", "/api/products/5", null).reached()).isTrue();
+    assertThat(run("PUT", "/api/products/5", null).reached()).isFalse();
+    assertThat(run("DELETE", "/api/products/5", null).reached()).isFalse();
+  }
+
+  @Test
+  @DisplayName("상품 조회 API는 열려 있지만 찜 API는 막힌다")
+  void 공개_API가_찜_API까지_열지_않는다() throws Exception {
+    // /api/**를 통째로 열거나 패턴을 /api/products/**로 넓히면 조용히 함께 열릴 수 있는 부분이다.
+    assertThat(run("GET", "/api/products/5", null).reached()).isTrue();
+    assertThat(run("GET", "/api/me/likes", null).reached()).isFalse();
   }
 
   @Test

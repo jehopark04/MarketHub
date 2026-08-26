@@ -38,7 +38,23 @@ public class WebConfig implements WebMvcConfigurer {
     registry.addInterceptor(new LoginCheckInterceptor("POST")).addPathPatterns("/products");
 
     // 판단은 위와 같고 거절하는 방법만 다르다 - 리다이렉트가 아니라 401.
-    // 화면과 달리 API는 전부 로그인이 필요하므로 여는 경로가 없다.
-    registry.addInterceptor(new ApiLoginCheckInterceptor()).addPathPatterns("/api/**");
+    // 상품 조회만 연다. 화면 쪽 /products가 이미 비로그인에게 열려 있어, API만 막으면
+    // JS로 옮겼을 때 비로그인 방문자가 상품을 못 보게 된다 - 화면과 정책이 어긋난다.
+    registry
+        .addInterceptor(new ApiLoginCheckInterceptor())
+        .addPathPatterns("/api/**")
+        .excludePathPatterns(
+            "/api/products", // 목록 조회(GET). 등록(POST)은 아래에서 따로 막는다
+            "/api/products/{productId:[0-9]+}", // 상세 조회(GET). 숫자 제약은 화면 쪽과 같은 이유다
+            "/api/members", // 회원가입 제출(POST). 가입하려는 사람에게는 세션이 없다
+            "/api/login", // 로그인 제출(POST). 막으면 로그인할 방법이 없다
+            "/api/logout"); // 세션이 없으면 아무 일도 안 하고 204다. 막으면 로그아웃하려는 사람에게 401이 나간다
+
+    // 위에서 통째로 열어둔 두 경로의 쓰기 요청만 메서드로 집어서 다시 막는다.
+    // /products를 GET은 열고 POST는 막은 것과 같은 구조다 - 경로 패턴만으로는 둘을 가를 수 없다.
+    registry.addInterceptor(new ApiLoginCheckInterceptor("POST")).addPathPatterns("/api/products");
+    registry
+        .addInterceptor(new ApiLoginCheckInterceptor("PUT", "DELETE"))
+        .addPathPatterns("/api/products/{productId:[0-9]+}");
   }
 }

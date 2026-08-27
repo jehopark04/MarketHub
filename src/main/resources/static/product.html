@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>상품 · MarketHub</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-header__brand" href="/">MarketHub</a>
+        <!-- 로그인 상태는 js/session.js가 채운다. -->
+        <nav class="site-header__nav"></nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <!-- 내용은 js/product-detail.js가 채운다. aria-live로 바뀐 것을 알린다. -->
+      <section id="product" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="/js/product-detail.js"></script>
+  </body>
+</html>

@@ -119,6 +119,11 @@ export function listProducts(cond = {}, { signal } = {}) {
   return request('/api/products', { query: cond, signal });
 }
 
+/** 상품 하나. 비로그인도 볼 수 있고, 그때 liked는 false다. 없는 상품이면 404다. */
+export function fetchProduct(productId) {
+  return request(`/api/products/${productId}`);
+}
+
 /**
  * 찜하기. 이미 찜한 상품이어도 204다 - "찜된 상태로 만들어라"는 요청이라 멱등하다.
  *

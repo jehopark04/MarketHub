@@ -24,4 +24,7 @@ public interface LikeService {
    * @param loginId 비로그인이면 null. 이때는 전부 false가 된다.
    */
   List<ProductLikeStatus> attachLikeStatus(List<Product> products, String loginId);
+
+  /** 상품 하나의 찜 여부. 상세 화면처럼 목록이 아닌 곳에서 쓴다. loginId가 null이면 false다. */
+  boolean isLiked(Long productId, String loginId);
 }

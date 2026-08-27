@@ -96,11 +96,33 @@ class ProductApiControllerTest {
   @DisplayName("상세는 설명과 판매자까지 담아 반환한다")
   void item_returnsDetail() {
     given(productService.findById(1L)).willReturn(product(1L));
+    given(likeService.isLiked(1L, "userA")).willReturn(false);
 
-    ProductDetailResponse result = productApiController.item(1L);
+    ProductDetailResponse result = productApiController.item(1L, loginMember);
 
     assertThat(result)
-        .isEqualTo(new ProductDetailResponse(1L, "제목", "설명입니다", 1000, ProductGrade.A, "sellerX"));
+        .isEqualTo(
+            new ProductDetailResponse(1L, "제목", "설명입니다", 1000, ProductGrade.A, "sellerX", false));
+  }
+
+  @Test
+  @DisplayName("찜한 상품을 조회하면 liked가 true다")
+  void item_liked() {
+    given(productService.findById(1L)).willReturn(product(1L));
+    given(likeService.isLiked(1L, "userA")).willReturn(true);
+
+    assertThat(productApiController.item(1L, loginMember).liked()).isTrue();
+  }
+
+  @Test
+  @DisplayName("비로그인 상세 조회는 loginId 없이 물어 liked가 false다")
+  void item_notLoggedIn() {
+    given(productService.findById(1L)).willReturn(product(1L));
+    given(likeService.isLiked(1L, null)).willReturn(false);
+
+    // 세션이 없는데 loginMember.getLoginId()를 부르면 NPE다. 비로그인 판정은 서비스에 맡긴다.
+    assertThat(productApiController.item(1L, null).liked()).isFalse();
+    verify(likeService).isLiked(1L, null);
   }
 
   @Test
@@ -109,7 +131,7 @@ class ProductApiControllerTest {
     // 컨트롤러가 try-catch로 삼키면 ApiExceptionHandler에 닿지 않아 404가 나가지 않는다.
     given(productService.findById(99L)).willThrow(new ProductNotFoundException("상품을 찾을 수 없습니다."));
 
-    assertThatThrownBy(() -> productApiController.item(99L))
+    assertThatThrownBy(() -> productApiController.item(99L, loginMember))
         .isInstanceOf(ProductNotFoundException.class);
   }
 

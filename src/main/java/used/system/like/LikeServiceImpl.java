@@ -61,14 +61,23 @@ public class LikeServiceImpl implements LikeService {
   }
 
   /**
-   * 상품마다 "내가 찜했나"를 묻지 않고 내 찜 id를 한 번에 받아 대조한다. 상품마다 조회하면 목록 길이만큼 질의가 늘어난다.
+   * 내가 찜한 상품 id들. 로그인하지 않았으면 빈 집합이다.
    *
-   * <p>비로그인(loginId == null)을 여기서 처리하는 이유: "로그인하지 않았으면 찜이 없는 것으로 친다"는 판단은 화면마다 다시 내릴 규칙이 아니다. 컨트롤러에
-   * 두면 목록을 보여주는 화면이 늘어날 때마다 같은 삼항연산자가 복사된다.
+   * <p>"로그인하지 않았으면 찜이 없는 것으로 친다"는 판단을 여기 한 곳에만 둔다. 목록과 단건이 각자 null을 검사하면 한쪽만 고치는 사고가 난다.
    */
+  private Set<Long> likedIdsOf(String loginId) {
+    return loginId == null ? Set.of() : findLikedProductIds(loginId);
+  }
+
+  @Override
+  public boolean isLiked(Long productId, String loginId) {
+    return likedIdsOf(loginId).contains(productId);
+  }
+
+  /** 상품마다 "내가 찜했나"를 묻지 않고 내 찜 id를 한 번에 받아 대조한다. 상품마다 조회하면 목록 길이만큼 질의가 늘어난다. */
   @Override
   public List<ProductLikeStatus> attachLikeStatus(List<Product> products, String loginId) {
-    Set<Long> likedIds = loginId == null ? Set.of() : findLikedProductIds(loginId);
+    Set<Long> likedIds = likedIdsOf(loginId);
 
     return products.stream()
         .map(product -> new ProductLikeStatus(product, likedIds.contains(product.getId())))

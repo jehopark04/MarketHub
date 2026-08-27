@@ -152,6 +152,23 @@ class LikeServiceImplTest {
   }
 
   @Test
+  @DisplayName("찜한 상품이면 isLiked가 true, 아니면 false다")
+  void isLiked() {
+    given(likeRepository.findByMemberId("userA")).willReturn(List.of(new Like("userA", 3L)));
+
+    assertThat(likeService.isLiked(3L, "userA")).isTrue();
+    assertThat(likeService.isLiked(5L, "userA")).isFalse();
+  }
+
+  @Test
+  @DisplayName("비로그인이면 isLiked도 저장소를 보지 않고 false다")
+  void isLiked_anonymous() {
+    // 목록과 단건이 같은 규칙을 쓴다. 한쪽만 고치면 여기가 깨진다.
+    assertThat(likeService.isLiked(3L, null)).isFalse();
+    verify(likeRepository, never()).findByMemberId(any());
+  }
+
+  @Test
   @DisplayName("비로그인이면 저장소를 보지 않고 전부 false다")
   void attachLikeStatus_anonymous() {
     // loginId가 null인데 조회로 넘어가면 "찜한 적 없는 회원"을 찾는 헛질의가 목록마다 나간다.

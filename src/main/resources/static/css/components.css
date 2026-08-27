@@ -395,3 +395,98 @@
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ── 카드 링크 ─────────────────────────
+   제목 링크의 ::after가 카드 전체를 덮는다. 카드를 통째로 <a>로 감싸면 그 안의
+   하트를 눌러도 상세로 튄다. 하트는 z-index로 링크 위에 올려 제 클릭을 받게 한다. */
+.card__link {
+  color: inherit;
+}
+
+.card__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+}
+
+.card__link:hover {
+  text-decoration: none;
+}
+
+.card:hover .card__link {
+  color: var(--link);
+}
+
+.heart {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 상세 ─────────────────────────────
+   목록보다 여백을 크게 잡고 제목과 가격을 화면의 중심으로 둔다. */
+.detail {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: var(--space-8) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.detail__title {
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.detail__price {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.detail__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.detail__seller {
+  font-size: var(--size-caption);
+  color: var(--text-muted);
+}
+
+/* 읽기 좋은 폭으로 제한한다. 한 줄이 길면 다음 줄로 눈이 못 돌아온다. */
+.detail__description {
+  max-width: 34rem;
+  margin-top: var(--space-3);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  line-height: 1.6;
+  white-space: pre-wrap; /* 판매자가 넣은 줄바꿈을 살린다 */
+  overflow-wrap: anywhere;
+}
+
+.heart--lg {
+  font-size: 1.75rem;
+}
+
+@media (max-width: 600px) {
+  .detail {
+    padding: var(--space-6) 0;
+  }
+}

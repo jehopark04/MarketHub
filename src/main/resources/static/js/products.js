@@ -6,8 +6,9 @@
  * 들고 있으면 이 셋을 전부 잃는다.
  */
 
-import { ApiError, likeProduct, listProducts, unlikeProduct } from './api.js';
+import { ApiError, listProducts } from './api.js';
 import { escapeHtml, showToast } from './dom.js';
+import { heartMarkup, toggleLike } from './likes.js';
 import { renderHeader } from './session.js';
 
 const FIELDS = ['keyword', 'minPrice', 'maxPrice', 'grade'];
@@ -58,14 +59,16 @@ function renderLoading() {
 function renderCard(product) {
   const gradeClass = product.grade === 'S' ? 'badge badge--s' : 'badge';
 
+  // 제목 링크가 카드 전체를 덮는다(components.css의 ::after). 카드를 통째로 <a>로
+  // 감싸지 않는 이유는 하트가 그 안에 들어가면 눌러도 상세로 튀기 때문이다.
+  // 하트는 링크 위로 올라와 있어(z-index) 제 클릭을 받는다.
   return `
     <li class="card" data-product-id="${product.productId}">
       <div class="card__top">
-        <h2 class="card__title">${escapeHtml(product.title)}</h2>
-        <button class="heart${product.liked ? ' heart--on' : ''}" type="button"
-                data-like-button aria-pressed="${product.liked}" aria-label="찜">
-          ${product.liked ? '&#9829;' : '&#9825;'}
-        </button>
+        <h2 class="card__title">
+          <a class="card__link" href="/products/${product.productId}">${escapeHtml(product.title)}</a>
+        </h2>
+        ${heartMarkup(product.liked)}
       </div>
       <p class="card__price">${formatPrice(product.price)}</p>
       <p><span class="${gradeClass}">상태 ${escapeHtml(product.grade)}</span></p>
@@ -115,55 +118,23 @@ async function load() {
   }
 }
 
-/* ── 찜 토글 ─────────────────────────── */
-
-/** 하트 모양과 상태를 함께 바꾼다. 둘이 어긋나면 눈과 낭독기가 다른 말을 한다. */
-function paintHeart(button, liked) {
-  button.classList.toggle('heart--on', liked);
-  button.setAttribute('aria-pressed', String(liked));
-  button.innerHTML = liked ? '&#9829;' : '&#9825;';
-}
-
-async function toggleLike(button) {
-  // 요청이 끝나기 전에 또 누르면 무시한다. 서버는 멱등이라 견디지만, 응답이 엇갈려
-  // 도착하면 화면이 실제 상태와 어긋난다.
-  if (button.disabled) return;
-
-  const card = button.closest('.card');
-  const productId = card.dataset.productId;
-  const wasLiked = button.getAttribute('aria-pressed') === 'true';
-
-  // 누르는 즉시 바꾼다. 응답을 기다렸다가 바꾸면 눌렀는데 반응이 없는 순간이 생긴다.
-  paintHeart(button, !wasLiked);
-  button.disabled = true;
-
-  try {
-    await (wasLiked ? unlikeProduct(productId) : likeProduct(productId));
-  } catch (error) {
-    paintHeart(button, wasLiked); // 실패했으니 되돌린다
-
-    if (!(error instanceof ApiError)) throw error;
-
-    // 401이면 api.js가 이미 로그인 화면으로 보냈다. 떠나는 화면에 알림을 띄우지 않는다.
-    if (error.status === 401) return;
-
-    // 다른 사람이 지운 상품이다. 하트만 되돌리면 눌러도 계속 실패하므로 카드를 뺀다.
-    if (error.status === 404) {
-      card.remove();
-      showToast('이미 삭제된 상품입니다.');
-      return;
-    }
-    showToast(error.detail);
-  } finally {
-    button.disabled = false;
-  }
-}
+/* ── 찜 토글 ───────────────────────────
+   누르는 동작은 likes.js가 맡는다. 여기서는 이 화면에서만 다른 것 - 상품이 사라졌을 때
+   그 카드를 빼는 일 - 만 넘긴다. */
 
 // 카드는 검색할 때마다 다시 그려진다. 카드마다 리스너를 달면 그릴 때마다 쌓이므로
 // 목록을 담는 요소에 한 번만 건다.
 results.addEventListener('click', (event) => {
   const button = event.target.closest('[data-like-button]');
-  if (button) toggleLike(button);
+  if (!button) return;
+
+  const card = button.closest('.card');
+  toggleLike(button, card.dataset.productId, {
+    onGone: () => {
+      card.remove(); // 되돌리기만 하면 눌러도 계속 실패한다
+      showToast('이미 삭제된 상품입니다.');
+    },
+  });
 });
 
 /** 주소를 바꾸고 다시 그린다. 페이지를 새로 열지 않으므로 화면이 깜빡이지 않는다. */

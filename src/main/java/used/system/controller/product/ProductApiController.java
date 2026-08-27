@@ -61,10 +61,21 @@ public class ProductApiController {
         .toList();
   }
 
-  /** 없는 상품이면 findById가 ProductNotFoundException을 던지고 ApiExceptionHandler가 404로 바꾼다. */
+  /**
+   * 없는 상품이면 findById가 ProductNotFoundException을 던지고 ApiExceptionHandler가 404로 바꾼다.
+   *
+   * <p>조회는 비로그인에게도 열려 있어 세션 회원을 required = false로 받는다. 그때 찜 여부는 LikeService가 false로 판정한다 - 그 규칙은
+   * 여기가 아니라 그쪽에 있다.
+   */
   @GetMapping("/{productId}")
-  public ProductDetailResponse item(@PathVariable Long productId) {
-    return ProductDetailResponse.from(productService.findById(productId));
+  public ProductDetailResponse item(
+      @PathVariable Long productId,
+      @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member loginMember) {
+
+    Product product = productService.findById(productId);
+    String loginId = loginMember == null ? null : loginMember.getLoginId();
+
+    return ProductDetailResponse.from(product, likeService.isLiked(productId, loginId));
   }
 
   /**
@@ -86,8 +97,9 @@ public class ProductApiController {
                 request.price(),
                 request.grade()));
 
+    // 방금 만든 상품이라 찜했을 리 없다. 확인하러 저장소를 다녀올 이유가 없다.
     return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
-        .body(ProductDetailResponse.from(saved));
+        .body(ProductDetailResponse.from(saved, false));
   }
 
   /**

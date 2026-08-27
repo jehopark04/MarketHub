@@ -2,6 +2,8 @@ package used.system.exception;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,9 +23,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * <p>응답 형식은 스프링 내장 ProblemDetail(RFC 9457)이다. 에러 응답 DTO를 직접 만드는 것보다 낫다 — 표준이라 클라이언트가 형식을 예측할 수 있고,
  * 반환값의 status가 응답 상태 코드로 그대로 적용된다.
  *
+ * <p>스프링 내장 예외(타입 불일치·없는 경로·미지원 메서드·Content-Type 불일치)는 application.properties의
+ * spring.mvc.problemdetails.enabled가 맡는다. 그 설정이 켜지면 스프링도 @ControllerAdvice를 하나 등록하는데, 거기에
+ * MethodArgumentNotValidException 처리가 들어 있어 아래 handleValidation과 겹친다. @Order가 없으면 이 클래스가 최하위로 밀려
+ * 스프링 것이 이기고, 응답에서 errors 맵이 통째로 사라진다.
+ *
  * <p>⚠️ 새 커스텀 예외를 만들면 여기에 항목을 더해야 한다. 빠뜨리면 500이 나간다.
  */
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class ApiExceptionHandler {
 
   @ExceptionHandler(ProductNotFoundException.class)

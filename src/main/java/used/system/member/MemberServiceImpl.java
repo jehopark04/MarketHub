@@ -21,19 +21,6 @@ public class MemberServiceImpl implements MemberService {
     return memberRepository.save(member);
   }
 
-  //    @Override
-  //    public Member login(String loginId, String password) {
-  //        Optional<Member> optionalMember = memberRepository.findByLoginId(loginId);
-  //        if (optionalMember.isEmpty()){
-  //            return null;
-  //        }
-  //        Member member = optionalMember.get();
-  //        if(!member.getPassword().equals(password)){
-  //            return null;
-  //        }
-  //        return member;
-  //    }
-
   @Override
   public Member login(String loginId, String password) {
     return memberRepository

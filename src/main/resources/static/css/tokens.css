@@ -22,6 +22,8 @@
   --danger-bg: #fdecea;
 
   --header-bg: rgba(255, 255, 255, 0.72);
+  --toast-bg: rgba(29, 29, 31, 0.92);
+  --toast-text: #f5f5f7;
 
   /* ── 타이포 ────────────────────────────── */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
@@ -83,6 +85,8 @@
     --danger-bg: #331a19;
 
     --header-bg: rgba(0, 0, 0, 0.72);
+    --toast-bg: rgba(245, 245, 247, 0.95);
+    --toast-text: #1d1d1f;
 
     --shadow-card: none;
     --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.5);

@@ -120,6 +120,20 @@ export function listProducts(cond = {}, { signal } = {}) {
 }
 
 /**
+ * 찜하기. 이미 찜한 상품이어도 204다 - "찜된 상태로 만들어라"는 요청이라 멱등하다.
+ *
+ * 401은 기본값대로 로그인 화면으로 보낸다. 찜은 로그인이 필요한 동작이므로 그게 맞다.
+ */
+export function likeProduct(productId) {
+  return request(`/api/me/likes/${productId}`, { method: 'PUT' });
+}
+
+/** 찜 취소. 찜하지 않은 상품이어도 204다. 삭제된 상품에 남은 내 찜도 풀 수 있다. */
+export function unlikeProduct(productId) {
+  return request(`/api/me/likes/${productId}`, { method: 'DELETE' });
+}
+
+/**
  * 지금 로그인한 회원. 비로그인이면 null이다.
  *
  * 여기서 401은 오류가 아니라 "로그인하지 않았다"는 답이다. 다른 401과 똑같이 다뤄

@@ -6,8 +6,8 @@
  * 들고 있으면 이 셋을 전부 잃는다.
  */
 
-import { listProducts, ApiError } from './api.js';
-import { escapeHtml } from './dom.js';
+import { ApiError, likeProduct, listProducts, unlikeProduct } from './api.js';
+import { escapeHtml, showToast } from './dom.js';
 import { renderHeader } from './session.js';
 
 const FIELDS = ['keyword', 'minPrice', 'maxPrice', 'grade'];
@@ -49,19 +49,23 @@ function renderLoading() {
   results.innerHTML = `<ul class="card-grid">${cards}</ul>`;
 }
 
+/**
+ * span이 아니라 button인 이유: 누르는 것이 되었다. 버튼이어야 Tab으로 닿고
+ * Space·Enter로 눌리며, 화면 낭독기가 "누를 수 있는 것"으로 읽는다.
+ *
+ * 상태는 aria-pressed로 알린다. 하트 모양은 눈으로만 보이는 정보다.
+ */
 function renderCard(product) {
   const gradeClass = product.grade === 'S' ? 'badge badge--s' : 'badge';
-  // 1단계에서는 표시만 한다. 누르는 동작은 3단계에서 붙인다.
-  const heartClass = product.liked ? 'heart heart--on' : 'heart';
-  const heartLabel = product.liked ? '찜한 상품' : '찜하지 않은 상품';
 
   return `
-    <li class="card">
+    <li class="card" data-product-id="${product.productId}">
       <div class="card__top">
         <h2 class="card__title">${escapeHtml(product.title)}</h2>
-        <span class="${heartClass}" role="img" aria-label="${heartLabel}">
+        <button class="heart${product.liked ? ' heart--on' : ''}" type="button"
+                data-like-button aria-pressed="${product.liked}" aria-label="찜">
           ${product.liked ? '&#9829;' : '&#9825;'}
-        </span>
+        </button>
       </div>
       <p class="card__price">${formatPrice(product.price)}</p>
       <p><span class="${gradeClass}">상태 ${escapeHtml(product.grade)}</span></p>
@@ -110,6 +114,57 @@ async function load() {
     }
   }
 }
+
+/* ── 찜 토글 ─────────────────────────── */
+
+/** 하트 모양과 상태를 함께 바꾼다. 둘이 어긋나면 눈과 낭독기가 다른 말을 한다. */
+function paintHeart(button, liked) {
+  button.classList.toggle('heart--on', liked);
+  button.setAttribute('aria-pressed', String(liked));
+  button.innerHTML = liked ? '&#9829;' : '&#9825;';
+}
+
+async function toggleLike(button) {
+  // 요청이 끝나기 전에 또 누르면 무시한다. 서버는 멱등이라 견디지만, 응답이 엇갈려
+  // 도착하면 화면이 실제 상태와 어긋난다.
+  if (button.disabled) return;
+
+  const card = button.closest('.card');
+  const productId = card.dataset.productId;
+  const wasLiked = button.getAttribute('aria-pressed') === 'true';
+
+  // 누르는 즉시 바꾼다. 응답을 기다렸다가 바꾸면 눌렀는데 반응이 없는 순간이 생긴다.
+  paintHeart(button, !wasLiked);
+  button.disabled = true;
+
+  try {
+    await (wasLiked ? unlikeProduct(productId) : likeProduct(productId));
+  } catch (error) {
+    paintHeart(button, wasLiked); // 실패했으니 되돌린다
+
+    if (!(error instanceof ApiError)) throw error;
+
+    // 401이면 api.js가 이미 로그인 화면으로 보냈다. 떠나는 화면에 알림을 띄우지 않는다.
+    if (error.status === 401) return;
+
+    // 다른 사람이 지운 상품이다. 하트만 되돌리면 눌러도 계속 실패하므로 카드를 뺀다.
+    if (error.status === 404) {
+      card.remove();
+      showToast('이미 삭제된 상품입니다.');
+      return;
+    }
+    showToast(error.detail);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+// 카드는 검색할 때마다 다시 그려진다. 카드마다 리스너를 달면 그릴 때마다 쌓이므로
+// 목록을 담는 요소에 한 번만 건다.
+results.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-like-button]');
+  if (button) toggleLike(button);
+});
 
 /** 주소를 바꾸고 다시 그린다. 페이지를 새로 열지 않으므로 화면이 깜빡이지 않는다. */
 function navigate(search) {

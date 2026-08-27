@@ -36,8 +36,7 @@ class MemberApiControllerTest {
 
   @InjectMocks private MemberApiController memberApiController;
 
-  private final MemberJoinRequest request =
-      new MemberJoinRequest("userA", "에이", "password1", "password1");
+  private final MemberJoinRequest request = new MemberJoinRequest("userA", "에이", "password1");
 
   @Test
   @DisplayName("요청을 Member로 옮겨 가입시키고 201을 반환한다")

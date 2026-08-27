@@ -124,6 +124,24 @@ export function fetchProduct(productId) {
   return request(`/api/products/${productId}`);
 }
 
+/** 상품 등록. 판매자는 서버가 세션에서 정하므로 보내지 않는다. 201에 만든 상품이 담겨 온다. */
+export function createProduct(product) {
+  return request('/api/products', { method: 'POST', body: product });
+}
+
+/**
+ * 상품 수정. 네 필드를 전부 새 값으로 갈아끼운다(그래서 PATCH가 아니라 PUT이다).
+ * 일부만 보내면 나머지가 비워진다. 204라 돌려받는 것이 없다.
+ */
+export function updateProduct(productId, product) {
+  return request(`/api/products/${productId}`, { method: 'PUT', body: product });
+}
+
+/** 상품 삭제. 남의 상품이면 403, 이미 없으면 404다. */
+export function deleteProduct(productId) {
+  return request(`/api/products/${productId}`, { method: 'DELETE' });
+}
+
 /**
  * 찜하기. 이미 찜한 상품이어도 204다 - "찜된 상태로 만들어라"는 요청이라 멱등하다.
  *

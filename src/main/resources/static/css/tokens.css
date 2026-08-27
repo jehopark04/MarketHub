@@ -20,6 +20,8 @@
   --link: #0066cc;
   --danger: #c7332a;
   --danger-bg: #fdecea;
+  --danger-on: #ffffff;
+  --scrim: rgba(0, 0, 0, 0.32);
 
   --header-bg: rgba(255, 255, 255, 0.72);
   --toast-bg: rgba(29, 29, 31, 0.92);
@@ -83,6 +85,8 @@
     --link: #2997ff;
     --danger: #ff6961;
     --danger-bg: #331a19;
+    --danger-on: #1d1d1f;
+    --scrim: rgba(0, 0, 0, 0.6);
 
     --header-bg: rgba(0, 0, 0, 0.72);
     --toast-bg: rgba(245, 245, 247, 0.95);

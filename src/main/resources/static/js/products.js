@@ -162,5 +162,13 @@ form.addEventListener('reset', (event) => {
 // 뒤로/앞으로 가기. 주소가 바뀌었으니 그 조건으로 다시 그린다.
 window.addEventListener('popstate', load);
 
-renderHeader();
+/** 로그인한 사람에게만 보인다. 비로그인에게 보여주면 눌러도 로그인 화면으로 튕긴다. */
+async function renderHeroActions() {
+  if (await renderHeader()) {
+    document.querySelector('#hero-actions').innerHTML =
+      '<a class="btn" href="/products/new">상품 등록</a>';
+  }
+}
+
+renderHeroActions();
 load();

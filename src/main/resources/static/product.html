@@ -22,6 +22,16 @@
       <section id="product" aria-live="polite"></section>
     </main>
 
+    <!-- 삭제 확인. <dialog>라 Esc로 닫히고 초점이 안에 갇히는 것을 브라우저가 해준다. -->
+    <dialog class="dialog" id="delete-dialog">
+      <h2 class="dialog__title">상품을 삭제할까요?</h2>
+      <p class="dialog__body">삭제하면 되돌릴 수 없습니다.</p>
+      <div class="dialog__actions">
+        <button class="btn btn--quiet" type="button" data-cancel>취소</button>
+        <button class="btn btn--danger" type="button" data-confirm>삭제</button>
+      </div>
+    </dialog>
+
     <script type="module" src="/js/product-detail.js"></script>
   </body>
 </html>

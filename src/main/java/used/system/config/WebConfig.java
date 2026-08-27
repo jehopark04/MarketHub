@@ -32,6 +32,13 @@ public class WebConfig implements WebMvcConfigurer {
     // 여기 걸리면 그 화면 대신 상세가 열린다. forward라 id는 쿼리로 오지 않고,
     // 화면이 location.pathname에서 읽는다.
     registry.addViewController("/products/{productId:[0-9]+}").setViewName("forward:/product.html");
+
+    // 등록과 수정. /products/new가 위 상세 매핑에 걸리지 않는 것은 거기 숫자 제약을
+    // 뒀기 때문이다.
+    registry.addViewController("/products/new").setViewName("forward:/product-new.html");
+    registry
+        .addViewController("/products/{productId:[0-9]+}/edit")
+        .setViewName("forward:/product-edit.html");
   }
 
   @Override

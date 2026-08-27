@@ -490,3 +490,79 @@
     padding: var(--space-6) 0;
   }
 }
+
+/* ── 히어로 안의 동작 ─────────────────── */
+.hero__actions:empty {
+  display: none; /* 비로그인이면 비어 있다. 빈 여백을 남기지 않는다 */
+}
+
+.hero__actions {
+  margin-top: var(--space-5);
+}
+
+/* ── 여러 줄 입력 ─────────────────────── */
+.field__textarea {
+  min-height: 8rem;
+  line-height: 1.5;
+  resize: vertical; /* 가로로 늘이면 폼 밖으로 나간다 */
+}
+
+/* ── 위험한 동작 ───────────────────────
+   되돌릴 수 없는 것에만 쓴다. 화면에 이런 버튼이 여럿이면 아무것도 위험해 보이지 않는다. */
+.btn--danger {
+  background: var(--danger);
+  color: var(--danger-on);
+}
+
+.btn--danger:hover {
+  background: var(--danger);
+  filter: brightness(1.08);
+}
+
+/* ── 상세의 소유자 동작 ─────────────────
+   주인공은 상품이지 버튼이 아니라서 조용하게 둔다. */
+.detail__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ── 확인 창 ─────────────────────────── */
+.dialog {
+  max-width: 22rem;
+  padding: var(--space-6);
+  border: none;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dialog::backdrop {
+  background: var(--scrim);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.dialog__title {
+  font-size: var(--size-lead);
+  font-weight: 600;
+  letter-spacing: var(--tracking-normal);
+}
+
+.dialog__body {
+  margin-top: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--size-caption);
+}
+
+.dialog__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+.dialog__actions .btn {
+  flex: 1;
+}

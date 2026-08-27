@@ -3,64 +3,13 @@
  *
  * 두 화면이 하는 일이 거의 같아 한 파일에 둔다 - 폼을 잠그고, 보내고, 실패하면
  * 에러를 입력칸 아래에 뿌리고, 성공하면 옮긴다. 페이지에 있는 폼을 보고 갈라진다.
+ *
+ * 실패를 화면에 붙이는 방식은 상품 폼과 같아 form-errors.js로 옮겼다.
  */
 
-import { ApiError, join, login } from './api.js';
+import { join, login } from './api.js';
+import { clearErrors, showFieldError, whileSubmitting } from './form-errors.js';
 import { goHome, renderHeader, safeRedirect } from './session.js';
-
-/* ── 에러 표시 ─────────────────────────────
-   서버가 검증 실패를 { 필드이름: 메시지 }로 주고, 그 이름이 입력칸 name과 같다.
-   그래서 맞는 자리를 찾아 넣기만 하면 된다. */
-
-function clearErrors(form) {
-  form.querySelectorAll('.field__error').forEach((element) => {
-    element.textContent = '';
-  });
-  const summary = form.querySelector('.form-error');
-  summary.textContent = '';
-  summary.hidden = true;
-}
-
-function showFieldError(form, field, message) {
-  const target = form.querySelector(`.field__error[data-error-for="${field}"]`);
-  if (target) {
-    target.textContent = message;
-  } else {
-    showFormError(form, message); // 화면에 없는 필드라면 삼키지 말고 위쪽에 보여준다
-  }
-}
-
-/** 특정 입력칸의 것이 아닌 실패(409 중복 아이디, 401 로그인 실패 등). */
-function showFormError(form, message) {
-  const summary = form.querySelector('.form-error');
-  summary.textContent = message;
-  summary.hidden = false;
-}
-
-function handleFailure(form, error) {
-  if (!(error instanceof ApiError)) throw error; // 예상한 실패가 아니다
-
-  if (error.errors) {
-    for (const [field, message] of Object.entries(error.errors)) {
-      showFieldError(form, field, message);
-    }
-    return;
-  }
-  showFormError(form, error.detail);
-}
-
-/** 제출하는 동안 버튼을 잠근다. 연타로 같은 요청이 두 번 나가는 것을 막는다. */
-async function whileSubmitting(form, work) {
-  const button = form.querySelector('button[type="submit"]');
-  button.disabled = true;
-  try {
-    await work();
-  } catch (error) {
-    handleFailure(form, error);
-  } finally {
-    button.disabled = false;
-  }
-}
 
 /* ── 로그인 ───────────────────────────── */
 

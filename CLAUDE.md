@@ -3,7 +3,8 @@
 중고거래 웹 애플리케이션. Spring Boot 기반 **JSON REST API**. 학습용 프로젝트.
 
 원래 Thymeleaf SSR이었고 같은 기능을 API로 옮긴 뒤 화면 계층을 걷어냈다.
-프론트는 아직 없다 — `src/main/resources/static/`에 두면 스프링이 그대로 서빙한다.
+지금은 `src/main/resources/static/`에 바닐라 JS 프론트를 단계적으로 얹는 중이다.
+같은 서버가 화면과 API를 모두 주므로 동일 오리진이고, CORS 설정도 토큰 인증도 필요 없다.
 
 ## 스택
 Spring Boot 4 / Java 21 / Gradle / Spring WebMVC / Lombok
@@ -21,6 +22,7 @@ Spring Boot 4 / Java 21 / Gradle / Spring WebMVC / Lombok
 | 도메인 객체·Service·ServiceImpl·Repository·MemoryRepository | `used.system.<도메인>` — 한 패키지에 함께 산다 | `used.system.product.ProductServiceImpl` |
 | Controller·요청/응답 DTO·세션 상수 | `used.system.controller.<도메인>` | `used.system.controller.product.ProductCreateRequest` |
 | 커스텀 예외·`ApiExceptionHandler` | `used.system.exception` | `used.system.exception.ProductNotFoundException` |
+| 화면(HTML·CSS·JS) | `src/main/resources/static/` — 아래 규칙 참조 | `static/js/api.js` |
 
 즉 **서비스·리포지토리 계층은 도메인으로 나누고, 웹 계층과 예외는 계층으로 모은다.**
 컨트롤러를 도메인 패키지(`used.system.product`)에 두지 않는다.
@@ -63,6 +65,20 @@ Spring Boot 4 / Java 21 / Gradle / Spring WebMVC / Lombok
 - 예외: 검색 조건(`ProductSearchCond`)만 `BindingResult`를 받아 **일부러 삼킨다**.
   조회는 잘못된 조건에 실패로 답하지 않는다 — 그 필드만 빠진 채 나머지로 검색된다.
 
+## 프론트 (`src/main/resources/static/`)
+- 빌드 도구·프레임워크·CDN을 쓰지 않는다. **바닐라 JS(ES 모듈) + CSS**만 쓴다.
+  브라우저가 그대로 실행하는 코드여야 학습 대상이 흐려지지 않는다.
+- 배치: 페이지는 `static/*.html`, 스타일은 `static/css/`, 스크립트는 `static/js/`.
+  id가 필요한 화면은 `product.html?id=1`처럼 쿼리 파라미터로 받는다.
+- **모든 서버 호출은 `js/api.js`를 지난다.** 화면이 `fetch`를 직접 부르지 않는다 —
+  실패 처리가 화면 수만큼 복사된다. 경로 문자열도 여기서만 안다.
+- 색은 `css/tokens.css`의 변수로만 쓴다. 직접 적으면 다크 모드에서 한쪽만 바뀐다.
+- 사용자 입력을 `innerHTML`에 넣을 때는 이스케이프한다(`escapeHtml`).
+- 목록을 다시 그리는 요청은 **앞선 요청을 취소**한다(`AbortController`).
+  취소하지 않으면 먼저 보낸 응답이 늦게 도착해 최신 결과를 덮어쓴다.
+- `fetch` 주의: `res.ok`를 직접 확인한다(4xx·5xx는 예외를 던지지 않는다).
+  `204`는 본문이 없어 `res.json()`을 부르면 터진다.
+
 ## 테스트
 - 위치: `src/test/java/used/`, **소스와 동일 패키지 구조**. 컨트롤러 테스트도 마찬가지로
   `used.system.controller.<도메인>`에 둔다.
@@ -85,7 +101,8 @@ Spring Boot 4 / Java 21 / Gradle / Spring WebMVC / Lombok
 |---|---|
 | 인메모리 리포지토리 | 학습 단계의 의도. "DB를 써라" 제안 금지 |
 | `@SpringBootTest` 미사용 | 위 테스트 규약대로 의도적 |
-| 프론트 부재 | API만 있고 화면이 없는 상태가 지금의 의도다. "SSR로 되돌려라" 금지 |
+| 프론트가 단계적으로만 있음 | 화면을 한 번에 다 만들지 않고 단계로 나눠 얹는다. 아직 없는 화면을 결함으로 올리지 않는다 |
+| 프론트에 빌드 도구·프레임워크 없음 | 위 프론트 규약대로 의도적. "React를 써라"·"번들러를 붙여라" 금지 |
 | `setId` | 리포지토리 채번 통로. "setter 하나뿐이라 일관성 없다"·"캡슐화 위반" 금지 |
 | 동시성·스레드 안전성 | 단일 사용자 학습 전제로 프로젝트 범위 밖. `HashMap`·`++sequence`를 스레드 안전성 문제로 올리지 않는다 |
 

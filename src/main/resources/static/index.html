@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MarketHub</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-header__brand" href="/">MarketHub</a>
+        <!-- 로그인 상태와 메뉴는 2단계에서 채운다. -->
+        <nav class="site-header__nav"></nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero">
+        <h1 class="hero__title">중고거래.</h1>
+        <p class="hero__lead">필요한 물건을, 필요한 사람에게.</p>
+      </section>
+
+      <form class="filters" id="search-form">
+        <div class="field">
+          <label class="field__label" for="keyword">검색어</label>
+          <input class="field__input" type="text" id="keyword" name="keyword" placeholder="상품 제목" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="minPrice">최소 가격</label>
+          <input class="field__input" type="number" id="minPrice" name="minPrice" min="0" placeholder="0" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="maxPrice">최대 가격</label>
+          <input class="field__input" type="number" id="maxPrice" name="maxPrice" min="0" placeholder="제한 없음" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="grade">상태</label>
+          <select class="field__input" id="grade" name="grade">
+            <option value="">전체</option>
+            <option value="S">S</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+        <div class="filters__actions">
+          <button class="btn" type="submit">검색</button>
+          <button class="btn btn--quiet" type="reset">초기화</button>
+        </div>
+      </form>
+
+      <!-- aria-live: 목록이 바뀌면 화면 낭독기가 읽어준다. -->
+      <section id="results" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="/js/products.js"></script>
+  </body>
+</html>

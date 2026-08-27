@@ -1,0 +1,134 @@
+/* 리셋, 타이포, 페이지 골격. 개별 부품은 components.css에 있다. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--size-body);
+  line-height: 1.47;
+  letter-spacing: var(--tracking-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 키보드 사용자에게만 보이는 초점 표시. 마우스 클릭에는 나타나지 않는다. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ── 헤더 ─────────────────────────────────
+   상단에 붙고 배경이 비쳐 보인다. 스크롤하면 카드가 반투명 막 아래로 지나간다. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--header-height);
+  background: var(--header-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.site-header__inner {
+  max-width: var(--content-width);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.site-header__brand {
+  color: var(--text);
+  font-size: var(--size-title);
+  font-weight: 600;
+  letter-spacing: var(--tracking-normal);
+}
+
+.site-header__brand:hover {
+  text-decoration: none;
+}
+
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  font-size: var(--size-caption);
+  color: var(--text-muted);
+}
+
+/* ── 본문 골격 ─────────────────────────── */
+.page {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 0 var(--space-5) var(--space-8);
+}
+
+/* ── 히어로 ───────────────────────────────
+   큰 글자 하나와 한 줄 설명. 이미지가 없는 대신 여백과 크기로 위계를 만든다. */
+.hero {
+  padding: var(--space-8) 0 var(--space-6);
+  text-align: center;
+}
+
+.hero__title {
+  font-size: var(--size-display);
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+
+.hero__lead {
+  margin-top: var(--space-4);
+  font-size: var(--size-lead);
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.38;
+  text-wrap: balance;
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding: var(--space-6) 0 var(--space-5);
+  }
+}

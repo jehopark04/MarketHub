@@ -1,0 +1,88 @@
+/*
+ * 디자인 토큰. 색·타이포·간격·모양을 여기서만 정하고, 나머지 CSS는 이 변수만 쓴다.
+ * 색을 직접 적으면 다크 모드에서 한쪽만 바뀌어 읽을 수 없는 조합이 생긴다.
+ */
+
+:root {
+  /* ── 색 (라이트) ───────────────────────── */
+  --bg: #ffffff;
+  --bg-muted: #f5f5f7; /* 섹션 배경 */
+  --surface: #ffffff; /* 카드 */
+  --surface-raised: #ffffff;
+
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #d2d2d7;
+  --border-soft: #e8e8ed;
+
+  --accent: #0071e3; /* 버튼 */
+  --accent-hover: #0077ed;
+  --link: #0066cc;
+  --danger: #c7332a;
+
+  --header-bg: rgba(255, 255, 255, 0.72);
+
+  /* ── 타이포 ────────────────────────────── */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Helvetica Neue", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+  --size-display: clamp(2.25rem, 1.2rem + 3.4vw, 3.5rem); /* 36 → 56 */
+  --size-lead: clamp(1.125rem, 0.95rem + 0.6vw, 1.3125rem); /* 18 → 21 */
+  --size-title: 1.0625rem; /* 17 - 카드 제목 */
+  --size-price: 1.3125rem; /* 21 */
+  --size-body: 1.0625rem; /* 17 - 애플 본문 크기 */
+  --size-caption: 0.8125rem; /* 13 */
+
+  --tracking-tight: -0.02em; /* 큰 글자일수록 좁게 */
+  --tracking-normal: -0.01em;
+  --tracking-wide: 0.06em; /* 대문자 라벨 */
+
+  /* ── 간격 ──────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 5rem;
+
+  /* ── 모양 ──────────────────────────────── */
+  --radius-card: 18px;
+  --radius-field: 12px;
+  --radius-pill: 980px; /* 알약형 버튼 */
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.09);
+
+  /* ── 레이아웃 ──────────────────────────── */
+  --content-width: 1024px;
+  --header-height: 48px;
+
+  --ease: cubic-bezier(0.28, 0.11, 0.32, 1);
+  --duration: 0.3s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --bg-muted: #1d1d1f;
+    --surface: #1d1d1f;
+    --surface-raised: #2a2a2c;
+
+    --text: #f5f5f7;
+    --text-muted: #86868b;
+    --border: #424245;
+    --border-soft: #333336;
+
+    --accent: #2997ff;
+    --accent-hover: #47a5ff;
+    --link: #2997ff;
+    --danger: #ff6961;
+
+    --header-bg: rgba(0, 0, 0, 0.72);
+
+    --shadow-card: none;
+    --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.5);
+  }
+}

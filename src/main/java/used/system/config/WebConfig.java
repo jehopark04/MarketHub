@@ -2,10 +2,11 @@ package used.system.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 로그인 검사를 어느 요청에 적용할지 정한다.
+ * 화면 주소 매핑과, 로그인 검사를 어느 요청에 적용할지 정한다.
  *
  * <p>전부 막고 열 곳만 뚫는다. 반대로 "막을 곳만 나열"하면 나중에 경로를 추가하며 등록을 잊었을 때 그 경로가 무방비로 열린다. 잊었을 때 과하게 막히는 쪽이 안전하다.
  *
@@ -13,6 +14,20 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+  /**
+   * 확장자 없는 주소로 화면을 연다(/login → login.html).
+   *
+   * <p>스프링은 정적 파일을 파일 이름 그대로만 매핑한다. 이것이 없으면 /login은 404이고 주소에 .html이 드러난다. forward라 서버 안에서만 넘기므로
+   * 주소창은 /login으로 남는다.
+   *
+   * <p>상품 목록은 여기 없다. static/index.html이 이미 /로 열린다.
+   */
+  @Override
+  public void addViewControllers(ViewControllerRegistry registry) {
+    registry.addViewController("/login").setViewName("forward:/login.html");
+    registry.addViewController("/join").setViewName("forward:/join.html");
+  }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {

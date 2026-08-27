@@ -44,7 +44,32 @@ async function readProblem(response) {
   }
 }
 
-async function request(path, { method = 'GET', body, query, signal } = {}) {
+/**
+ * 로그인 화면으로 보내면서 돌아올 곳을 남긴다.
+ *
+ * 로그인 화면 자체에서는 보내지 않는다. 거기서 401이 나면 자기 자신으로 되돌아
+ * 무한히 도는 꼴이 된다.
+ *
+ * /login은 WebConfig가 login.html로 넘겨준다. 스프링은 정적 파일을 확장자 없는 주소로
+ * 매핑해주지 않아 그 설정이 없으면 404다.
+ */
+const LOGIN_PAGE = '/login';
+
+function goToLogin() {
+  if (location.pathname === LOGIN_PAGE) return;
+  const here = location.pathname + location.search;
+  location.href = `${LOGIN_PAGE}?redirect=${encodeURIComponent(here)}`;
+}
+
+/**
+ * @param unauthorized 401을 만났을 때의 처리.
+ *   'redirect' (기본) - 로그인 화면으로 보낸다. 로그인이 필요한 동작이었다는 뜻이다.
+ *   'throw'           - ApiError로 던진다. 401이 오류가 아니라 "답"인 요청에 쓴다
+ *                       (내 정보 조회의 401은 "비로그인"이고, 로그인 요청의 401은
+ *                       "아이디나 비밀번호가 틀렸다"다. 둘 다 로그인 화면으로
+ *                       보낼 일이 아니다).
+ */
+async function request(path, { method = 'GET', body, query, signal, unauthorized = 'redirect' } = {}) {
   const queryString = query ? toQueryString(query) : '';
   const url = queryString ? `${path}?${queryString}` : path;
 
@@ -68,8 +93,9 @@ async function request(path, { method = 'GET', body, query, signal } = {}) {
   // 반드시 직접 확인해야 한다. res.ok는 200~299일 때만 true다.
   if (!response.ok) {
     const problem = await readProblem(response);
-    // TODO(2단계): 401이면 로그인 화면으로 보낸다. 아직 로그인 화면이 없어
-    // 지금은 그대로 던져 화면이 메시지를 보여주게 둔다.
+    if (response.status === 401 && unauthorized === 'redirect') {
+      goToLogin();
+    }
     throw new ApiError(response.status, problem.detail, problem.errors);
   }
 
@@ -91,4 +117,41 @@ async function request(path, { method = 'GET', body, query, signal } = {}) {
  */
 export function listProducts(cond = {}, { signal } = {}) {
   return request('/api/products', { query: cond, signal });
+}
+
+/**
+ * 지금 로그인한 회원. 비로그인이면 null이다.
+ *
+ * 여기서 401은 오류가 아니라 "로그인하지 않았다"는 답이다. 다른 401과 똑같이 다뤄
+ * 로그인 화면으로 보내면, 비로그인 방문자가 목록만 보러 왔다가 로그인 화면으로 튕긴다.
+ * 상품 조회를 비로그인에 열어둔 서버 정책이 화면에서 무너지는 셈이다.
+ */
+export async function fetchMe() {
+  try {
+    return await request('/api/me', { unauthorized: 'throw' });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) return null;
+    throw error;
+  }
+}
+
+/** 회원가입. 성공해도 로그인되지는 않는다 - 서버가 세션을 만들지 않는다. */
+export function join({ loginId, name, password }) {
+  // passwordConfirm은 보내지 않는다. 서버가 받지 않는 값이고, 평문 비밀번호를
+  // 두 번 실어 보내면 로그에 남을 표면만 늘어난다. 두 칸 비교는 화면이 한다.
+  return request('/api/members', { method: 'POST', body: { loginId, name, password } });
+}
+
+/** 로그인. 401은 "아이디나 비밀번호가 틀렸다"라 로그인 화면으로 보낼 일이 아니다. */
+export function login({ loginId, password }) {
+  return request('/api/login', {
+    method: 'POST',
+    body: { loginId, password },
+    unauthorized: 'throw',
+  });
+}
+
+/** 로그아웃. 세션이 없어도 204라 실패를 따로 다룰 것이 없다. */
+export function logout() {
+  return request('/api/logout', { method: 'POST' });
 }

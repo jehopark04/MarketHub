@@ -7,19 +7,13 @@
  */
 
 import { listProducts, ApiError } from './api.js';
+import { escapeHtml } from './dom.js';
+import { renderHeader } from './session.js';
 
 const FIELDS = ['keyword', 'minPrice', 'maxPrice', 'grade'];
 
 const form = document.querySelector('#search-form');
 const results = document.querySelector('#results');
-
-/** 사용자 입력이 그대로 HTML이 되지 않게 한다. 제목에 <script>가 들어와도 글자로만 보인다. */
-function escapeHtml(value) {
-  return String(value).replace(
-    /[&<>"']/g,
-    (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
-  );
-}
 
 function formatPrice(price) {
   return `${price.toLocaleString('ko-KR')}원`;
@@ -142,4 +136,5 @@ form.addEventListener('reset', (event) => {
 // 뒤로/앞으로 가기. 주소가 바뀌었으니 그 조건으로 다시 그린다.
 window.addEventListener('popstate', load);
 
+renderHeader();
 load();

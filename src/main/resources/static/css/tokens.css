@@ -19,6 +19,7 @@
   --accent-hover: #0077ed;
   --link: #0066cc;
   --danger: #c7332a;
+  --danger-bg: #fdecea;
 
   --header-bg: rgba(255, 255, 255, 0.72);
 
@@ -79,6 +80,7 @@
     --accent-hover: #47a5ff;
     --link: #2997ff;
     --danger: #ff6961;
+    --danger-bg: #331a19;
 
     --header-bg: rgba(0, 0, 0, 0.72);
 

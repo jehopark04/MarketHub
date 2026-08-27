@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>회원가입 · MarketHub</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-header__brand" href="/">MarketHub</a>
+        <!-- 로그인 상태는 js/session.js가 채운다. -->
+        <nav class="site-header__nav"></nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="auth">
+        <h1 class="auth__title">회원가입</h1>
+        <p class="auth__lead">가입하면 바로 로그인됩니다.</p>
+
+        <form class="auth__form" id="join-form" novalidate>
+          <p class="form-error" role="alert" hidden></p>
+
+          <div class="field">
+            <label class="field__label" for="loginId">아이디</label>
+            <input class="field__input field__input--lg" type="text" id="loginId" name="loginId"
+                   autocomplete="username" />
+            <p class="field__error" data-error-for="loginId"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="name">이름</label>
+            <input class="field__input field__input--lg" type="text" id="name" name="name"
+                   autocomplete="name" />
+            <p class="field__error" data-error-for="name"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="password">비밀번호</label>
+            <input class="field__input field__input--lg" type="password" id="password" name="password"
+                   autocomplete="new-password" placeholder="8자 이상" />
+            <p class="field__error" data-error-for="password"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="passwordConfirm">비밀번호 확인</label>
+            <input class="field__input field__input--lg" type="password" id="passwordConfirm"
+                   name="passwordConfirm" autocomplete="new-password" />
+            <!-- 서버로 보내지 않는 값이다. 두 칸 비교는 화면이 한다. -->
+            <p class="field__error" data-error-for="passwordConfirm"></p>
+          </div>
+
+          <div class="auth__actions">
+            <button class="btn" type="submit">가입하기</button>
+          </div>
+        </form>
+
+        <p class="auth__alt">이미 계정이 있으신가요? <a href="/login">로그인</a></p>
+      </section>
+    </main>
+
+    <script type="module" src="/js/auth.js"></script>
+  </body>
+</html>

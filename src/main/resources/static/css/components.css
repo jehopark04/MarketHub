@@ -238,3 +238,103 @@
     opacity: 0.55;
   }
 }
+
+/* ── 헤더 안쪽 (session.js가 그린다) ────── */
+.site-header__user {
+  color: var(--text);
+  font-size: var(--size-caption);
+}
+
+.btn--sm {
+  min-height: 30px;
+  padding: var(--space-1) var(--space-3);
+}
+
+/* 요청이 나가는 동안 잠긴 버튼. 호버해도 반응하지 않는다. */
+.btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn[disabled]:hover {
+  background: var(--accent);
+}
+
+.btn--quiet[disabled]:hover {
+  background: transparent;
+}
+
+/* ── 인증 화면 ─────────────────────────
+   폼이 화면의 전부이므로 좁은 단일 열로 가운데 둔다. */
+.auth {
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: var(--space-8) 0;
+}
+
+.auth__title {
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: var(--tracking-tight);
+  text-align: center;
+}
+
+.auth__lead {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-6);
+  color: var(--text-muted);
+  font-size: var(--size-caption);
+  text-align: center;
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* 인증 화면 입력칸은 목록의 검색칸보다 크다. 여기서는 폼이 중심이다. */
+.field__input--lg {
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--size-body);
+}
+
+.auth__actions {
+  margin-top: var(--space-2);
+}
+
+.auth__actions .btn {
+  width: 100%;
+  min-height: 44px;
+  font-size: var(--size-body);
+}
+
+.auth__alt {
+  margin-top: var(--space-5);
+  text-align: center;
+  font-size: var(--size-caption);
+  color: var(--text-muted);
+}
+
+/* ── 폼 에러 ───────────────────────────
+   입력칸 아래는 그 칸의 문제, 폼 위쪽은 특정 칸의 것이 아닌 문제
+   (중복 아이디, 로그인 실패). */
+.field__error {
+  margin: 0;
+  min-height: 1rem; /* 에러가 떠도 아래 요소가 밀리지 않게 자리를 미리 잡는다 */
+  color: var(--danger);
+  font-size: 0.75rem;
+  line-height: 1.33;
+}
+
+.form-error {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-field);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: var(--size-caption);
+  line-height: 1.4;
+}

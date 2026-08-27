@@ -82,6 +82,19 @@ class ProductRequestValidationTest {
   }
 
   @Test
+  @DisplayName("가격이 음수면 위반이 발생한다")
+  void negativePrice() {
+    assertThat(위반_필드(create("제목", "설명입니다", -1))).containsExactly("price");
+  }
+
+  @Test
+  @DisplayName("가격이 0이면 위반이 없다 (경계값)")
+  void zeroPrice() {
+    // 무료로 나누는 것도 중고거래에서 흔한 일이라 막지 않는다. @Positive였다면 여기서 깨진다.
+    assertThat(위반_필드(create("제목", "설명입니다", 0))).isEmpty();
+  }
+
+  @Test
   @DisplayName("등급이 선택되지 않으면 위반이 발생한다")
   void nullGrade() {
     assertThat(위반_필드(new ProductCreateRequest("제목", "설명입니다", 10000, null)))

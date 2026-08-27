@@ -566,3 +566,88 @@
 .dialog__actions .btn {
   flex: 1;
 }
+
+/* ── 탭 ───────────────────────────────
+   지금 보는 것을 밑줄로만 표시한다. 큰 색을 쓰면 탭이 화면의 주인공이 된다. */
+.tabs {
+  display: flex;
+  gap: var(--space-5);
+  margin: var(--space-6) 0 var(--space-6);
+  border-bottom: 1px solid var(--border-soft);
+  overflow-x: auto; /* 좁은 폭에서 탭이 밀려 나가지 않게 */
+}
+
+.tabs__item {
+  padding: 0 0 var(--space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: var(--size-caption);
+  white-space: nowrap;
+  transition:
+    color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
+}
+
+.tabs__item:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.tabs__item--on {
+  border-bottom-color: var(--text);
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ── 내 정보 ──────────────────────────── */
+.profile {
+  padding: var(--space-6) 0 var(--space-7);
+}
+
+.profile__name {
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.14;
+}
+
+.profile__id {
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--size-caption);
+}
+
+/* ── 개수 요약 ─────────────────────────── */
+.counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-4);
+}
+
+.counts__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  background: var(--bg-muted);
+  border-radius: var(--radius-card);
+  color: inherit;
+  transition: background var(--duration) var(--ease);
+}
+
+.counts__item:hover {
+  background: var(--border-soft);
+  text-decoration: none;
+}
+
+.counts__number {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.counts__label {
+  font-size: var(--size-caption);
+  color: var(--text-muted);
+}

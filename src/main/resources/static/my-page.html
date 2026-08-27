@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>마이페이지 · MarketHub</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-header__brand" href="/">MarketHub</a>
+        <nav class="site-header__nav"></nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <!-- 세 화면 모두 여기로 forward된다. 무엇을 그릴지는 js/my-page.js가 주소로 정한다. -->
+      <section id="my-page" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="/js/my-page.js"></script>
+  </body>
+</html>

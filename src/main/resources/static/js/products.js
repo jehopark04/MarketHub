@@ -8,17 +8,14 @@
 
 import { ApiError, listProducts } from './api.js';
 import { escapeHtml, showToast } from './dom.js';
-import { heartMarkup, toggleLike } from './likes.js';
+import { toggleLike } from './likes.js';
+import { renderCardGrid } from './product-card.js';
 import { renderHeader } from './session.js';
 
 const FIELDS = ['keyword', 'minPrice', 'maxPrice', 'grade'];
 
 const form = document.querySelector('#search-form');
 const results = document.querySelector('#results');
-
-function formatPrice(price) {
-  return `${price.toLocaleString('ko-KR')}원`;
-}
 
 /** 주소에서 검색 조건을 읽는다. 화면 상태의 출처는 항상 주소다. */
 function condFromUrl() {
@@ -50,31 +47,6 @@ function renderLoading() {
   results.innerHTML = `<ul class="card-grid">${cards}</ul>`;
 }
 
-/**
- * span이 아니라 button인 이유: 누르는 것이 되었다. 버튼이어야 Tab으로 닿고
- * Space·Enter로 눌리며, 화면 낭독기가 "누를 수 있는 것"으로 읽는다.
- *
- * 상태는 aria-pressed로 알린다. 하트 모양은 눈으로만 보이는 정보다.
- */
-function renderCard(product) {
-  const gradeClass = product.grade === 'S' ? 'badge badge--s' : 'badge';
-
-  // 제목 링크가 카드 전체를 덮는다(components.css의 ::after). 카드를 통째로 <a>로
-  // 감싸지 않는 이유는 하트가 그 안에 들어가면 눌러도 상세로 튀기 때문이다.
-  // 하트는 링크 위로 올라와 있어(z-index) 제 클릭을 받는다.
-  return `
-    <li class="card" data-product-id="${product.productId}">
-      <div class="card__top">
-        <h2 class="card__title">
-          <a class="card__link" href="/products/${product.productId}">${escapeHtml(product.title)}</a>
-        </h2>
-        ${heartMarkup(product.liked)}
-      </div>
-      <p class="card__price">${formatPrice(product.price)}</p>
-      <p><span class="${gradeClass}">상태 ${escapeHtml(product.grade)}</span></p>
-    </li>`;
-}
-
 function renderProducts(products) {
   if (products.length === 0) {
     renderState('', '조건에 맞는 상품이 없습니다.', '검색어나 가격 범위를 넓혀 보세요.');
@@ -82,8 +54,7 @@ function renderProducts(products) {
   }
 
   const count = `<p class="results__count">상품 ${products.length}개</p>`;
-  const cards = products.map(renderCard).join('');
-  results.innerHTML = `${count}<ul class="card-grid">${cards}</ul>`;
+  results.innerHTML = count + renderCardGrid(products);
 }
 
 /**

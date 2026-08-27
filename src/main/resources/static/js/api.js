@@ -124,6 +124,16 @@ export function fetchProduct(productId) {
   return request(`/api/products/${productId}`);
 }
 
+/** 내가 등록한 상품. 등록한 적이 없으면 빈 배열이다. */
+export function fetchMyProducts() {
+  return request('/api/me/products');
+}
+
+/** 내가 찜한 상품. 찜한 뒤 삭제된 상품은 서버가 이미 걸러서 뺀다. */
+export function fetchMyLikes() {
+  return request('/api/me/likes');
+}
+
 /** 상품 등록. 판매자는 서버가 세션에서 정하므로 보내지 않는다. 201에 만든 상품이 담겨 온다. */
 export function createProduct(product) {
   return request('/api/products', { method: 'POST', body: product });

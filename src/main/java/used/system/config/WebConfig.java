@@ -36,6 +36,12 @@ public class WebConfig implements WebMvcConfigurer {
     // 등록과 수정. /products/new가 위 상세 매핑에 걸리지 않는 것은 거기 숫자 제약을
     // 뒀기 때문이다.
     registry.addViewController("/products/new").setViewName("forward:/product-new.html");
+
+    // 마이페이지 세 화면은 뼈대가 같아 한 파일을 쓴다. 주소가 셋이어야 뒤로 가기가
+    // 동작하고 링크를 공유할 수 있다 - 무엇을 그릴지는 화면이 pathname으로 정한다.
+    registry.addViewController("/my-page").setViewName("forward:/my-page.html");
+    registry.addViewController("/my-page/products").setViewName("forward:/my-page.html");
+    registry.addViewController("/my-page/likes").setViewName("forward:/my-page.html");
     registry
         .addViewController("/products/{productId:[0-9]+}/edit")
         .setViewName("forward:/product-edit.html");

@@ -44,7 +44,7 @@ export async function renderHeader() {
   }
 
   nav.innerHTML = `
-    <span class="site-header__user">${escapeHtml(me.name)}</span>
+    <a href="/my-page">${escapeHtml(me.name)}</a>
     <button class="btn btn--quiet btn--sm" type="button" id="logout-button">로그아웃</button>`;
 
   nav.querySelector('#logout-button').addEventListener('click', async (event) => {

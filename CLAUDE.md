@@ -59,6 +59,11 @@ Spring Boot 4 / Java 21 / Gradle / Spring WebMVC / Lombok
   인터셉터가 이미 막았으니 `required = false`는 **비로그인도 허용하는 경로에서만** 쓴다.
 - 신원(판매자·소유자)은 **요청 본문이 아니라 세션에서** 정한다.
   클라이언트가 보낸 값을 쓰면 남의 이름으로 등록된다.
+- 로그인 상태로 만드는 일은 `MemberApiController.startSession` 하나를 쓴다.
+  **기존 세션을 버리고 새로 발급한다** — 남이 심어둔 세션 id가 인증되면 심은 쪽이 함께
+  들어온다(세션 고정). 인자 없는 `getSession()`은 기존 세션을 승격시키므로 쓰지 않는다.
+- **회원가입도 세션을 발급한다.** 가입만 시키고 로그인을 따로 요청하게 하면 방금 정한 평문
+  비밀번호가 두 번 오가고, 가입은 됐는데 로그인만 실패하는 되돌릴 수 없는 상태가 생긴다.
 - 요청 DTO에 Bean Validation, 컨트롤러에서 `@Validated` + `@RequestBody`.
   **`BindingResult`를 받지 않는다** — 받으면 검증 실패가 예외로 안 올라가 400이 나가지 않는다.
   실패는 `MethodArgumentNotValidException` → `ApiExceptionHandler`가 필드별 메시지와 함께 400.

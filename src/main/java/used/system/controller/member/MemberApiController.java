@@ -30,22 +30,27 @@ public class MemberApiController {
   private final MemberService memberService;
 
   /**
-   * Location을 붙이지 않는다. 201에 권장되는 헤더지만 가리킬 경로가 없다 - 남의 회원 정보를 조회하는 API가 없고, 만들 이유도 없다. 없는 경로를 가리키는
-   * 것보다 빼는 편이 낫다.
+   * 가입과 동시에 로그인 상태로 만든다. 가입만 시키고 로그인을 따로 요청하게 하면 방금 정한 평문 비밀번호가 두 번 오간다 - 회원가입에서 passwordConfirm을 뺀
+   * 것과 같은 이유로 피한다. 두 단계로 나누면 원자적이지도 않다: 가입은 됐는데 로그인만 실패하면 되돌릴 수 없다.
+   *
+   * <p>Location을 붙이지 않는다. 201에 권장되는 헤더지만 가리킬 경로가 없다 - 남의 회원 정보를 조회하는 API가 없고, 만들 이유도 없다. 없는 경로를
+   * 가리키는 것보다 빼는 편이 낫다.
    *
    * <p>중복 아이디를 여기서 잡지 않는다. 예외를 상태 코드로 옮기는 일은 ApiExceptionHandler에 모아두기로 한 규약이고, 여기서 잡으면 그 통로가 막힌다.
    */
   @PostMapping("/api/members")
-  public ResponseEntity<MemberResponse> join(@Validated @RequestBody MemberJoinRequest request) {
+  public ResponseEntity<MemberResponse> join(
+      @Validated @RequestBody MemberJoinRequest request, HttpServletRequest servletRequest) {
+
     Member saved = memberService.join(request.toMember());
+    startSession(servletRequest, saved);
     return ResponseEntity.status(HttpStatus.CREATED).body(MemberResponse.from(saved));
   }
 
   /**
    * 성공하면 200에 회원 정보. 세션 쿠키는 응답 헤더에 실려 나가므로 본문에 담을 것이 따로 없다.
    *
-   * <p>로그인 전 세션을 버리고 새로 발급하는 것이 중요하다. 남이 심어둔 세션 id를 그대로 쓰면, 로그인으로 그 세션이 인증된 상태가 되어 심은 쪽이 함께 들어온다(세션
-   * 고정). 인자 없는 getSession()은 기존 세션을 그대로 승격시키므로 쓰지 않는다.
+   * <p>세션을 새로 발급하는 이유는 startSession에 적혀 있다.
    */
   @PostMapping("/api/login")
   public MemberResponse login(
@@ -56,13 +61,22 @@ public class MemberApiController {
       throw new LoginFailedException("아이디 또는 비밀번호가 맞지 않습니다.");
     }
 
+    startSession(servletRequest, member);
+    return MemberResponse.from(member);
+  }
+
+  /**
+   * 로그인 상태로 만든다. 가입과 로그인이 함께 쓴다.
+   *
+   * <p>기존 세션을 버리고 새로 발급하는 것이 중요하다. 남이 심어둔 세션 id를 그대로 쓰면, 인증되는 순간 그 세션이 로그인 상태가 되어 심은 쪽이 함께 들어온다(세션
+   * 고정). 인자 없는 getSession()은 기존 세션을 그대로 승격시키므로 쓰지 않는다.
+   */
+  private void startSession(HttpServletRequest servletRequest, Member member) {
     HttpSession previous = servletRequest.getSession(false);
     if (previous != null) {
       previous.invalidate();
     }
     servletRequest.getSession(true).setAttribute(SessionConst.LOGIN_MEMBER, member);
-
-    return MemberResponse.from(member);
   }
 
   /** 세션이 없어도 204다. "로그아웃된 상태로 만들어라"는 요청이므로 몇 번을 보내든 결과가 같다. */

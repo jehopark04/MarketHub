@@ -43,7 +43,8 @@ class MemberApiControllerTest {
   void join_delegates() {
     given(memberService.join(any(Member.class))).willReturn(new Member("userA", "에이", "password1"));
 
-    ResponseEntity<MemberResponse> response = memberApiController.join(request);
+    ResponseEntity<MemberResponse> response =
+        memberApiController.join(request, new MockHttpServletRequest());
 
     ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
     verify(memberService).join(captor.capture());
@@ -60,7 +61,7 @@ class MemberApiControllerTest {
     given(memberService.join(any(Member.class))).willReturn(new Member("userA", "에이", "password1"));
 
     // MemberResponse에 password 필드를 더하면 이 비교가 컴파일되지 않는다.
-    assertThat(memberApiController.join(request).getBody())
+    assertThat(memberApiController.join(request, new MockHttpServletRequest()).getBody())
         .isEqualTo(new MemberResponse("userA", "에이"));
   }
 
@@ -71,13 +72,57 @@ class MemberApiControllerTest {
     given(memberService.join(any(Member.class)))
         .willThrow(new DuplicateLoginIdException("이미 사용중인 아이디입니다."));
 
-    assertThatThrownBy(() -> memberApiController.join(request))
+    assertThatThrownBy(() -> memberApiController.join(request, new MockHttpServletRequest()))
         .isInstanceOf(DuplicateLoginIdException.class);
   }
 
   // ---------- 로그인 ----------
 
   private final LoginRequest loginRequest = new LoginRequest("userA", "password1");
+
+  @Test
+  @DisplayName("가입하면 곧바로 로그인 상태가 된다")
+  void join_startsSession() {
+    // 가입만 시키고 로그인을 따로 요청하게 하면 평문 비밀번호가 두 번 오간다.
+    // 회원가입에서 passwordConfirm을 뺀 것과 같은 이유로 여기서 세션까지 만든다.
+    Member saved = new Member("userA", "에이", "password1");
+    given(memberService.join(any(Member.class))).willReturn(saved);
+    MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+
+    memberApiController.join(request, servletRequest);
+
+    assertThat(servletRequest.getSession(false)).isNotNull();
+    assertThat(servletRequest.getSession(false).getAttribute(SessionConst.LOGIN_MEMBER))
+        .isEqualTo(saved);
+  }
+
+  @Test
+  @DisplayName("가입 전 세션도 버리고 새 세션을 발급한다")
+  void join_rotatesSession() {
+    // 로그인과 같은 이유다 - 남이 심어둔 세션 id가 가입으로 인증되면 심은 쪽이 함께 들어온다.
+    given(memberService.join(any(Member.class))).willReturn(new Member("userA", "에이", "password1"));
+    MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+    MockHttpSession planted = new MockHttpSession();
+    servletRequest.setSession(planted);
+
+    memberApiController.join(request, servletRequest);
+
+    assertThat(planted.isInvalid()).isTrue();
+    assertThat(servletRequest.getSession(false)).isNotSameAs(planted);
+  }
+
+  @Test
+  @DisplayName("중복 아이디면 세션을 만들지 않는다")
+  void join_duplicated_doesNotStartSession() {
+    given(memberService.join(any(Member.class)))
+        .willThrow(new DuplicateLoginIdException("이미 사용중인 아이디입니다."));
+    MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+
+    assertThatThrownBy(() -> memberApiController.join(request, servletRequest))
+        .isInstanceOf(DuplicateLoginIdException.class);
+
+    assertThat(servletRequest.getSession(false)).isNull();
+  }
 
   @Test
   @DisplayName("로그인에 성공하면 세션에 회원을 담고 회원 정보를 반환한다")
